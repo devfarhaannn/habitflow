@@ -30,6 +30,13 @@ export async function POST(req: Request) {
             timezone: timezone,
             email,
             passwordHash,
+            habitCategories:{
+                create:[
+                    {title:"Health"},
+                    {title:"Fitness"},
+                    {title:"Productivity"},
+                ]
+            }
         },
     });
 

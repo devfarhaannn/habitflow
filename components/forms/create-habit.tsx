@@ -257,7 +257,10 @@ export function CreateHabitDailog({ defaultOpen = false, className }: Props) {
                                             placeholder="Target Count"
                                             autoComplete="off"
                                             type="number"
-                                            onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                field.onChange(value === "" ? undefined : Number(value));
+                                            }}
                                         />
                                         {fieldState.invalid && (
                                             <FieldError errors={[fieldState.error]} />

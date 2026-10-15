@@ -9,14 +9,14 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
     const { userId } = await params;
     const session = await getServerSession(NEXT_AUTH);
 
-    if (!userId) {
+    if (!userId || !session?.user?.id) {
         return Response.json(
-            { error: "UserId is required" },
+            { error: "UserId is required or user is not authorized" },
             { status: 401 }
         );
     }
 
-    if (userId != session?.user.id) {
+    if (userId !== session.user.id) {
         return Response.json(
             { error: "UserId not authorized" },
             { status: 401 }
@@ -33,10 +33,31 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
             }
         })
 
+        if (categories.length === 0) {
+            await prisma.habitCategory.createMany({
+                data: [
+                    { title: "Health", userId: userId },
+                    { title: "Fitness", userId: userId },
+                    { title: "Productivity", userId: userId },
+                ]
+            });
+            
+            const newCategories = await prisma.habitCategory.findMany({
+                where: {
+                    userId: userId
+                }, select: {
+                    title: true,
+                    id: true,
+                }
+            });
+            return Response.json(newCategories);
+        }
+
         return Response.json(categories);
     } catch (error) {
+         console.error("Error fetching categories:", error);
         return Response.json(
-            { error: "Error whiel fetching request" },
+            { error: "Error while fetching request" },
             { status: 400 }
         );
     }
