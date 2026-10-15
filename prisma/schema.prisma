@@ -1,0 +1,181 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum HabitFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum HabitStatus {
+  ACTIVE
+  INACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id              String            @id @default(uuid())
+  name            String?
+  email           String            @unique
+  emailVerified   DateTime?
+  firstName       String?
+  lastName        String?
+  passwordHash    String?
+  image           String?
+  timezone        String            @default("UTC")
+  createdAt       DateTime          @default(now()) @db.Timestamptz
+  updatedAt       DateTime          @updatedAt @db.Timestamptz
+  habits          Habit[]
+  habitChecks     HabitCompletion[]
+  habitDailyStats HabitDailyStat[]
+  habitReminders  HabitReminder[]
+  accounts        Account[]
+  sessions        Session[]
+  habitCategories HabitCategory[]
+
+  @@map("users")
+}
+
+model Habit {
+  id               String            @id @default(uuid())
+  order            Int               @default(autoincrement())
+  userId           String
+  title            String
+  description      String?
+  color            String            @default("#FFFFFF")
+  icon             String            @default("ListTodo")
+  goalType         HabitFrequency    @default(DAILY)
+  targetPerDay     Int               @default(1)
+  streakGoal       Int?
+  categoryId       String
+  category         HabitCategory     @relation(fields: [categoryId], references: [id])
+  status           HabitStatus       @default(ACTIVE)
+  archivedAt       DateTime?         @db.Timestamptz
+  startDate        DateTime          @default(now()) @db.Timestamptz
+  endDate          DateTime?         @db.Timestamptz
+  reminderEnabled  Boolean           @default(false)
+  currentStreak    Int               @default(0)
+  longestStreak    Int               @default(0)
+  totalCompletions Int               @default(0)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime          @default(now()) @db.Timestamptz
+  updatedAt        DateTime          @updatedAt @db.Timestamptz
+  habitChecks      HabitCompletion[]
+  habitDailyStats  HabitDailyStat[]
+  habitReminders   HabitReminder[]
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, id])
+  @@index([categoryId])
+  @@map("habits")
+}
+
+model HabitCategory {
+  id     String  @id @default(uuid())
+  title  String
+  userId String
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habits Habit[]
+
+  @@index([userId])
+}
+
+model HabitCompletion {
+  id          String   @id @default(uuid())
+  habitId     String
+  date        DateTime @default(now()) @db.Timestamptz
+  completedAt DateTime @default(now()) @db.Timestamptz
+  habit       Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+
+  @@index([habitId])
+  @@index([date])
+  @@index([habitId, date])
+  @@index([userId, date])
+  @@map("habit_completions")
+}
+
+model HabitDailyStat {
+  id              String   @id @default(uuid())
+  habitId         String
+  userId          String
+  date            DateTime @default(now()) @db.Timestamptz
+  completionCount Int      @default(0)
+  targetCount     Int      @default(1)
+  habit           Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, date])
+  @@index([userId, date])
+  @@index([habitId, date])
+  @@index([date])
+  @@map("habit_daily_stats")
+}
+
+model HabitReminder {
+  id         String   @id @default(uuid())
+  userId     String
+  habitId    String
+  time       DateTime @db.Timestamptz
+  daysOfWeek Int[]
+  enabled    Boolean  @default(false)
+  createdAt  DateTime @default(now()) @db.Timestamptz
+  updatedAt  DateTime @updatedAt @db.Timestamptz
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@index([userId, enabled])
+  @@map("habit_reminders")
+}
