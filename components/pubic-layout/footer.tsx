@@ -12,10 +12,10 @@ export default function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground group-hover:scale-110 transition-transform duration-300 animate-pulse-glow">
                 <GalleryVerticalEnd className="h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
               </div>
-              <span className="text-black dark:text-white font-bold text-xl">HabitKit</span>
+              <span className="text-black dark:text-white font-bold text-xl">HabitFlow</span>
             </Link>
             <p className="text-gray-400 mb-4 max-w-md">
-              HabitKit is a modern habit tracking web application that helps users build and maintain positive habits through streak tracking, progress visualization, and a clean productivity-focused interface.
+              HabitFlow is a modern habit tracking web application that helps users build and maintain positive habits through streak tracking, progress visualization, and a clean productivity-focused interface.
             </p>
           </div>
 
@@ -45,16 +45,16 @@ export default function Footer() {
         <div className="border-t border-gray-800 pt-8 mt-8">
           <div className="flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © 2026 SajalDBansal. Made for better web understanding.
+              © 2026 Farhan Bhatt. Made for better web understanding.
             </p>
             <div className="flex space-x-6 mt-4 sm:mt-0">
-              <a href="https://x.com/SAJALDUTTBANSAL" className="text-gray-400 hover:text-white transition-colors">
+              <a href="https://x.com/farhanbhatt07" className="text-gray-400 hover:text-white transition-colors">
                 Twitter
               </a>
-              <a href="https://github.com/SajalDBansal" className="text-gray-400 hover:text-white transition-colors">
+              <a href="https://github.com/devfarhaannn" className="text-gray-400 hover:text-white transition-colors">
                 GitHub
               </a>
-              <a href="https://www.linkedin.com/in/sajalduttbansal/" className="text-gray-400 hover:text-white transition-colors">
+              <a href="https://www.linkedin.com/in/farhanbhatt/" className="text-gray-400 hover:text-white transition-colors">
                 LinkedIn
               </a>
             </div>

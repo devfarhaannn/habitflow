@@ -89,7 +89,7 @@ export function AppHeader({ userId, timezone }: { userId: string, timezone: stri
           </Button>
           <Button variant="outline" asChild size="sm" className="hidden sm:flex">
             <a
-              href="https://github.com/SajalDBansal/habitkit"
+              href="https://github.com/devfarhaannn/habitflow"
               rel="noopener noreferrer"
               target="_blank"
               className="dark:text-foreground"

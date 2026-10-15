@@ -60,7 +60,7 @@ export function Navbar() {
                         <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground group-hover:scale-110 transition-transform duration-300 animate-pulse-glow">
                             <GalleryVerticalEnd className="h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
                         </div>
-                        <span className="font-semibold group-hover:text-primary transition-colors duration-300">HabitKit</span>
+                        <span className="font-semibold group-hover:text-primary transition-colors duration-300">HabitFlow</span>
                     </Link>
                 </div>
 
@@ -111,7 +111,7 @@ export function Navbar() {
 
                     {/* github button */}
                     <Button asChild className="hover-lift animate-pulse-glow hidden lg:block">
-                        <Link href="https://github.com/SajalDBansal/habitkit">Github</Link>
+                        <Link href="https://github.com/devfarhaannn/habitflow">Github</Link>
                     </Button>
 
                     {user ? (
@@ -228,7 +228,7 @@ export function Navigation() {
                                         href="/"
                                     >
                                         <div className="mt-4 mb-2 text-lg font-medium">
-                                            HabitKit
+                                            HabitFlow
                                         </div>
                                         <p className="text-muted-foreground text-sm leading-tight">
                                             A platform to mark your habits and daily goals.
@@ -237,7 +237,7 @@ export function Navigation() {
                                 </NavigationMenuLink>
                             </li>
                             <ListItem href="/dashboard" title="Dashboard">
-                                Manage your HabitKit account
+                                Manage your HabitFlow account
                             </ListItem>
                             <ListItem href="/gallery" title="Gallery">
                                 Explore screenshots and previews
@@ -281,7 +281,7 @@ export function Navigation() {
                                     <Link href="/stack">
                                         <div className="font-medium">Know the Stack</div>
                                         <div className="text-muted-foreground">
-                                            Explore the technologies and tools used to build HabitKit.
+                                            Explore the technologies and tools used to build HabitFlow.
                                         </div>
                                     </Link>
                                 </NavigationMenuLink>
@@ -289,7 +289,7 @@ export function Navigation() {
                                     <Link href="/architecture">
                                         <div className="font-medium">Services Architecture</div>
                                         <div className="text-muted-foreground">
-                                            Understand the architecture that powers HabitKit.
+                                            Understand the architecture that powers HabitFlow.
                                         </div>
                                     </Link>
                                 </NavigationMenuLink>
@@ -297,7 +297,7 @@ export function Navigation() {
                                     <Link href="/schema">
                                         <div className="font-medium">DataBase Schema & Models</div>
                                         <div className="text-muted-foreground">
-                                            Learn about the database structure, schemas, and data models used in HabitKit.
+                                            Learn about the database structure, schemas, and data models used in HabitFlow.
                                         </div>
                                     </Link>
                                 </NavigationMenuLink>
@@ -331,19 +331,19 @@ export function Navigation() {
                         <ul className="grid w-[120px] gap-4">
                             <li>
                                 <NavigationMenuLink asChild>
-                                    <Link href="https://x.com/SAJALDUTTBANSAL" className="flex-row items-center gap-2">
+                                    <Link href="https://x.com/farhanbhatt07" className="flex-row items-center gap-2">
                                         <TwitterIcon />
                                         Twiiter
                                     </Link>
                                 </NavigationMenuLink>
                                 <NavigationMenuLink asChild>
-                                    <Link href="https://github.com/SajalDBansal" className="flex-row items-center gap-2">
+                                    <Link href="https://github.com/devfarhaannn" className="flex-row items-center gap-2">
                                         <GithubIcon />
                                         Github
                                     </Link>
                                 </NavigationMenuLink>
                                 <NavigationMenuLink asChild>
-                                    <Link href="https://www.linkedin.com/in/sajalduttbansal/" className="flex-row items-center gap-2">
+                                    <Link href="https://www.linkedin.com/in/farhanbhatt/" className="flex-row items-center gap-2">
                                         <LinkedinIcon />
                                         Linked In
                                     </Link>

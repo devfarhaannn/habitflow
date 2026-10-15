@@ -1,6 +1,6 @@
-## Habitkit
+## Habitflow
 
-**Habitkit** is a modern, full‑stack habit tracking app designed to help you build better habits, one day at a time. It provides a focused dashboard, rich analytics, and a clean UI so you can see your progress, stay accountable, and tweak your routines quickly.
+**Habitflow** is a modern, full‑stack habit tracking app designed to help you build better habits, one day at a time. It provides a focused dashboard, rich analytics, and a clean UI so you can see your progress, stay accountable, and tweak your routines quickly.
 
 ---
 
@@ -75,8 +75,8 @@
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/your-username/habitkit.git
-cd habitkit
+git clone https://github.com/your-username/habitflow.git
+cd habitflow
 ```
 
 2. **Install dependencies**
@@ -90,7 +90,7 @@ npm install
 Create a `.env` file in the project root and configure at least:
 
 ```bash
-DATABASE_URL="postgresql://user:password@localhost:5432/habitkit"
+DATABASE_URL="postgresql://user:password@localhost:5432/habitflow"
 NEXTAUTH_SECRET="your-nextauth-secret"
 NEXTAUTH_URL="http://localhost:3000"
 # other provider / auth configs as needed
@@ -145,7 +145,7 @@ Visit `http://localhost:3000` in your browser.
 
 ## Notes
 
-- Habitkit is currently in early development (`version 0.1.0`).
+- Habitflow is currently in early development (`version 0.1.0`).
 - The UI/UX is optimized for a dark theme and desktop‑first layouts but is being iterated to support more use‑cases over time.
 
 

@@ -9,7 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "HabitKit - Mordern Habit Tracker",
+  title: "HabitFlow - Modern Habit Tracker",
   description: "Build better habits, one day at a time.",
   icons: {
     icon: [
@@ -45,7 +45,7 @@ export default function RootLayout({
               defaultTheme="dark"
               enableSystem={false}
               disableTransitionOnChange={false}
-              storageKey="habitkit-theme"
+              storageKey="habitflow-theme"
             >
               {children}
             </ThemeProvider>

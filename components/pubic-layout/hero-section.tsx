@@ -17,7 +17,7 @@ export default function HeroSection() {
     async function onSubmit() {
         toast("Loging in with demo data")
 
-        const result = await login("credentials", "demo@habitkit.com", "randomPassword");
+        const result = await login("credentials", "demo@habitflow.com", "randomPassword");
 
         if (!error && result) {
             redirect("/dashboard");

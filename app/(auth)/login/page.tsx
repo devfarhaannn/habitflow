@@ -19,7 +19,7 @@ export default async function LoginPage() {
                     <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
                         <GalleryVerticalEnd className="size-4" />
                     </div>
-                    HabitKit Inc.
+                    HabitFlow Inc.
                 </a>
                 <LoginForm />
             </div>
