@@ -134,7 +134,7 @@ export default function ContactPage() {
                             <div className="text-center space-y-3">
 
                                 <div className="flex items-center justify-center gap-2">
-                                    <h3 className="text-xl font-semibold">Sajal Dutt Bansal</h3>
+                                    <h3 className="text-xl font-semibold">Farhan Bhatt</h3>
                                     <span className="size-2 bg-primary/30 rounded-full"></span>
                                     <p className="text-muted-foreground">Full Stack Developer</p>
                                 </div>

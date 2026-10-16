@@ -10,7 +10,7 @@ export function AppFooter() {
                 <p className='text-sm text-balance max-sm:text-center'>
                     {`©${new Date().getFullYear()}`}{' '}
                     <a href='#' className='text-primary'>
-                        SajaDBansal
+                        Farhan Bhatt
                     </a>
                     , Made for better web understanding
                 </p>
@@ -18,13 +18,13 @@ export function AppFooter() {
                     <a href='#'>
                         <FacebookIcon className='size-4' />
                     </a>
-                    <a href='https://github.com/sajaldbansal'>
+                    <a href='https://github.com/devfarhaannn'>
                         <GithubIcon className='size-4' />
                     </a>
-                    <a href='https://www.linkedin.com/in/sajalduttbansal/'>
+                    <a href='https://www.linkedin.com/in/farhanbhatt'>
                         <LinkedinIcon className='size-4' />
                     </a>
-                    <a href='https://x.com/SAJALDUTTBANSAL'>
+                    <a href='https://x.com/farhanbhatt07'>
                         <TwitterIcon className='size-4' />
                     </a>
                 </div>

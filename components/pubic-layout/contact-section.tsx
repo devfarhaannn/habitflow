@@ -110,7 +110,7 @@ export default function ContactSection() {
 
                             <CardHeader className="space-y-4">
                                 <div className="text-center">
-                                    <CardTitle className="text-2xl">Sajal Dutt Bansal</CardTitle>
+                                    <CardTitle className="text-2xl">Farhan Bhatt</CardTitle>
                                     <p className="text-muted-foreground mt-1">Full Stack Developer</p>
                                 </div>
 
