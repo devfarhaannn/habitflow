@@ -39,6 +39,7 @@ export async function GET(_: NextRequest, { params }: Params) {
         });
     } catch (error) {
         console.error("Backup export error:", error);
+
         return NextResponse.json(
             { error: "Failed to export data" },
             { status: 500 }
@@ -81,7 +82,6 @@ export async function POST(request: NextRequest, { params }: Params) {
             reminders,
         } = backup.data;
 
-        // Prevent importing records belonging to another user.
         const allRecords = [
             ...categories,
             ...habits,
@@ -90,37 +90,196 @@ export async function POST(request: NextRequest, { params }: Params) {
             ...reminders,
         ];
 
-        if (allRecords.some((record) => !record || typeof record !== "object" ||
-            (record.userId && record.userId !== userId))) {
+        // Basic record validation
+        if (
+            allRecords.some(
+                (record) =>
+                    !record ||
+                    typeof record !== "object" ||
+                    Array.isArray(record) ||
+                    typeof record.id !== "string" ||
+                    (record.userId && record.userId !== userId)
+            )
+        ) {
             return NextResponse.json(
-                { error: "Backup contains invalid user data" },
+                { error: "Backup contains invalid records" },
                 { status: 400 }
             );
         }
 
-        // Ensure every imported habit references a category in this backup
-        // or an existing category belonging to the logged-in user.
-        const categoryIds = new Set(
-            categories.map((category: { id: string }) => category.id)
-        );
-
-        const existingCategories = await prisma.habitCategory.findMany({
-            where: { userId },
-            select: { id: true },
-        });
-
-        existingCategories.forEach((category) => categoryIds.add(category.id));
-
-        if (habits.some((habit: { categoryId: string }) =>
-            !categoryIds.has(habit.categoryId)
-        )) {
+        // Validate required fields
+        if (
+            categories.some(
+                (item: any) =>
+                    typeof item.title !== "string" ||
+                    !item.title.trim()
+            ) ||
+            habits.some(
+                (item: any) =>
+                    typeof item.title !== "string" ||
+                    !item.title.trim() ||
+                    typeof item.categoryId !== "string" ||
+                    !item.categoryId ||
+                    typeof item.startDate !== "string" &&
+                    !(item.startDate instanceof Date)
+            ) ||
+            completions.some(
+                (item: any) =>
+                    typeof item.habitId !== "string" ||
+                    !item.habitId
+            ) ||
+            dailyStats.some(
+                (item: any) =>
+                    typeof item.habitId !== "string" ||
+                    !item.habitId ||
+                    !Number.isInteger(item.completionCount) ||
+                    !Number.isInteger(item.targetCount)
+            ) ||
+            reminders.some(
+                (item: any) =>
+                    typeof item.habitId !== "string" ||
+                    !item.habitId ||
+                    !Array.isArray(item.daysOfWeek) ||
+                    item.daysOfWeek.some(
+                        (day: number) =>
+                            !Number.isInteger(day) || day < 0 || day > 6
+                    ) ||
+                    typeof item.enabled !== "boolean" ||
+                    !item.time
+            )
+        ) {
             return NextResponse.json(
-                { error: "A habit references a missing category" },
+                { error: "Backup contains invalid field values" },
                 { status: 400 }
             );
         }
 
-        await prisma.$transaction(async (tx) => {
+        // Prevent duplicate IDs inside the backup.
+        for (const collection of [
+            categories,
+            habits,
+            completions,
+            dailyStats,
+            reminders,
+        ]) {
+            const ids = collection.map((item: any) => item.id);
+
+            if (new Set(ids).size !== ids.length) {
+                return NextResponse.json(
+                    { error: "Backup contains duplicate record IDs" },
+                    { status: 400 }
+                );
+            }
+        }
+
+        const result = await prisma.$transaction(async (tx) => {
+            const categoryIds = categories.map((item: any) => item.id);
+            const habitIds = habits.map((item: any) => item.id);
+            const completionIds = completions.map((item: any) => item.id);
+            const reminderIds = reminders.map((item: any) => item.id);
+            const statIds = dailyStats.map((item: any) => item.id);
+
+            // Check existing record ownership.
+            const [
+                existingCategories,
+                existingHabits,
+                existingCompletions,
+                existingReminders,
+                existingStats,
+            ] = await Promise.all([
+                tx.habitCategory.findMany({
+                    where: { id: { in: categoryIds } },
+                    select: { id: true, userId: true },
+                }),
+                tx.habit.findMany({
+                    where: { id: { in: habitIds } },
+                    select: { id: true, userId: true },
+                }),
+                tx.habitCompletion.findMany({
+                    where: { id: { in: completionIds } },
+                    select: { id: true, userId: true },
+                }),
+                tx.habitReminder.findMany({
+                    where: { id: { in: reminderIds } },
+                    select: { id: true, userId: true },
+                }),
+                tx.habitDailyStat.findMany({
+                    where: {
+                        OR: [
+                            { id: { in: statIds } },
+                            { habitId: { in: habitIds } },
+                        ],
+                    },
+                    select: {
+                        id: true,
+                        habitId: true,
+                        userId: true,
+                    },
+                }),
+            ]);
+
+            const existingRecords = [
+                ...existingCategories,
+                ...existingHabits,
+                ...existingCompletions,
+                ...existingReminders,
+                ...existingStats,
+            ];
+
+            if (
+                existingRecords.some(
+                    (record) => record.userId !== userId
+                )
+            ) {
+                throw new Error("BACKUP_OWNERSHIP_CONFLICT");
+            }
+
+            // Get all categories already owned by this user.
+            const userCategories = await tx.habitCategory.findMany({
+                where: { userId },
+                select: { id: true },
+            });
+
+            const validCategoryIds = new Set([
+                ...userCategories.map((item) => item.id),
+                ...categoryIds,
+            ]);
+
+            if (
+                habits.some(
+                    (habit: any) => !validCategoryIds.has(habit.categoryId)
+                )
+            ) {
+                throw new Error("INVALID_CATEGORY_REFERENCE");
+            }
+
+            // Get all existing habits owned by this user.
+            const userHabits = await tx.habit.findMany({
+                where: { userId },
+                select: { id: true },
+            });
+
+            const validHabitIds = new Set([
+                ...userHabits.map((item) => item.id),
+                ...habitIds,
+            ]);
+
+            // Validate completion, statistics and reminder references.
+            if (
+                completions.some(
+                    (item: any) => !validHabitIds.has(item.habitId)
+                ) ||
+                dailyStats.some(
+                    (item: any) => !validHabitIds.has(item.habitId)
+                ) ||
+                reminders.some(
+                    (item: any) => !validHabitIds.has(item.habitId)
+                )
+            ) {
+                throw new Error("INVALID_HABIT_REFERENCE");
+            }
+
+            // Import categories.
             for (const category of categories) {
                 await tx.habitCategory.upsert({
                     where: { id: category.id },
@@ -135,22 +294,48 @@ export async function POST(request: NextRequest, { params }: Params) {
                 });
             }
 
+            // Import habits.
             for (const habit of habits) {
                 const {
-                    id, order, title, description, color, icon,
-                    goalType, targetPerDay, streakGoal, categoryId,
-                    status, archivedAt, startDate, endDate,
-                    reminderEnabled, currentStreak, longestStreak,
-                    totalCompletions, createdAt, updatedAt,
+                    id,
+                    order,
+                    title,
+                    description,
+                    color,
+                    icon,
+                    goalType,
+                    targetPerDay,
+                    streakGoal,
+                    categoryId,
+                    status,
+                    archivedAt,
+                    startDate,
+                    endDate,
+                    reminderEnabled,
+                    currentStreak,
+                    longestStreak,
+                    totalCompletions,
+                    createdAt,
+                    updatedAt,
                 } = habit;
 
                 const fields = {
-                    order, title, description, color, icon,
-                    goalType, targetPerDay, streakGoal, categoryId,
-                    status, archivedAt: archivedAt ? new Date(archivedAt) : null,
+                    order,
+                    title,
+                    description,
+                    color,
+                    icon,
+                    goalType,
+                    targetPerDay,
+                    streakGoal,
+                    categoryId,
+                    status,
+                    archivedAt: archivedAt ? new Date(archivedAt) : null,
                     startDate: new Date(startDate),
                     endDate: endDate ? new Date(endDate) : null,
-                    reminderEnabled, currentStreak, longestStreak,
+                    reminderEnabled,
+                    currentStreak,
+                    longestStreak,
                     totalCompletions,
                 };
 
@@ -160,13 +345,18 @@ export async function POST(request: NextRequest, { params }: Params) {
                         id,
                         userId,
                         ...fields,
-                        ...(createdAt ? { createdAt: new Date(createdAt) } : {}),
-                        ...(updatedAt ? { updatedAt: new Date(updatedAt) } : {}),
+                        ...(createdAt
+                            ? { createdAt: new Date(createdAt) }
+                            : {}),
+                        ...(updatedAt
+                            ? { updatedAt: new Date(updatedAt) }
+                            : {}),
                     },
                     update: fields,
                 });
             }
 
+            // Import completions.
             for (const completion of completions) {
                 await tx.habitCompletion.upsert({
                     where: { id: completion.id },
@@ -184,6 +374,7 @@ export async function POST(request: NextRequest, { params }: Params) {
                 });
             }
 
+            // Import daily statistics.
             for (const stat of dailyStats) {
                 await tx.habitDailyStat.upsert({
                     where: {
@@ -207,6 +398,7 @@ export async function POST(request: NextRequest, { params }: Params) {
                 });
             }
 
+            // Import reminders.
             for (const reminder of reminders) {
                 await tx.habitReminder.upsert({
                     where: { id: reminder.id },
@@ -231,20 +423,42 @@ export async function POST(request: NextRequest, { params }: Params) {
                     },
                 });
             }
-        });
 
-        return NextResponse.json({
-            message: "Backup imported successfully",
-            imported: {
+            return {
                 categories: categories.length,
                 habits: habits.length,
                 completions: completions.length,
                 dailyStats: dailyStats.length,
                 reminders: reminders.length,
-            },
+            };
+        });
+
+        return NextResponse.json({
+            message: "Backup imported successfully",
+            imported: result,
         });
     } catch (error) {
         console.error("Backup import error:", error);
+
+        if (error instanceof Error) {
+            if (error.message === "BACKUP_OWNERSHIP_CONFLICT") {
+                return NextResponse.json(
+                    { error: "Backup contains conflicting records." },
+                    { status: 403 }
+                );
+            }
+
+            if (
+                error.message === "INVALID_CATEGORY_REFERENCE" ||
+                error.message === "INVALID_HABIT_REFERENCE"
+            ) {
+                return NextResponse.json(
+                    { error: "Backup contains invalid relationships." },
+                    { status: 400 }
+                );
+            }
+        }
+
         return NextResponse.json(
             { error: "Failed to import backup. Check the backup file and try again." },
             { status: 500 }
