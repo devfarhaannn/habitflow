@@ -187,78 +187,78 @@ export function HabitCalendar({
 
             {/* Selected date history */}
             <div className="max-h-72 overflow-y-auto pr-3">
-            <div className="px-4 lg:px-6">
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <CalendarDays className="h-5 w-5 text-muted-foreground" />
+                <div className="px-4 lg:px-6">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-2">
+                                <CalendarDays className="h-5 w-5 text-muted-foreground" />
 
-                            <CardTitle>
-                                Habit History —{" "}
-                                {format(selectedDate, "MMMM d, yyyy")}
-                            </CardTitle>
-                        </div>
-                    </CardHeader>
-
-                    <CardContent>
-                        {selectedStats.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                No habits were active on this date.
-                            </p>
-                        ) : (
-                            <div className="space-y-4">
-                                {selectedStats.map((habit) => {
-                                    const isComplete =
-                                        habit.completionCount >= habit.targetCount;
-
-                                    const isPartial =
-                                        habit.completionCount > 0 &&
-                                        !isComplete;
-
-                                    return (
-                                        <div
-                                            key={habit.id}
-                                            className="flex items-center justify-between gap-4 border-b last:border-0 pb-3 last:pb-0"
-                                        >
-                                            <div className="min-w-0">
-                                                <p className="font-medium truncate">
-                                                    {habit.title}
-                                                </p>
-
-                                                <p className="text-xs text-muted-foreground">
-                                                    {habit.completionCount} of{" "}
-                                                    {habit.targetCount} completions
-                                                </p>
-                                            </div>
-
-                                            {!habit.hasRecord ? (
-                                                <Badge variant="outline">
-                                                    No record
-                                                </Badge>
-                                            ) : isComplete ? (
-                                                <Badge className="bg-green-600 hover:bg-green-600">
-                                                    Completed
-                                                </Badge>
-                                            ) : isPartial ? (
-                                                <Badge className="bg-blue-600 hover:bg-blue-600">
-                                                    Partial
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="secondary">
-                                                    Not completed
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                                
+                                <CardTitle>
+                                    Habit History —{" "}
+                                    {format(selectedDate, "MMMM d, yyyy")}
+                                </CardTitle>
                             </div>
-                            
-                        )}
-                    </CardContent>
-                </Card>
+                        </CardHeader>
+
+                        <CardContent>
+                            {selectedStats.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">
+                                    No habits were active on this date.
+                                </p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {selectedStats.map((habit) => {
+                                        const isComplete =
+                                            habit.completionCount >= habit.targetCount;
+
+                                        const isPartial =
+                                            habit.completionCount > 0 &&
+                                            !isComplete;
+
+                                        return (
+                                            <div
+                                                key={habit.id}
+                                                className="flex items-center justify-between gap-4 border-b last:border-0 pb-3 last:pb-0"
+                                            >
+                                                <div className="min-w-0">
+                                                    <p className="font-medium truncate">
+                                                        {habit.title}
+                                                    </p>
+
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {habit.completionCount} of{" "}
+                                                        {habit.targetCount} completions
+                                                    </p>
+                                                </div>
+
+                                                {!habit.hasRecord ? (
+                                                    <Badge variant="outline">
+                                                        No record
+                                                    </Badge>
+                                                ) : isComplete ? (
+                                                    <Badge className="bg-green-600 hover:bg-green-600">
+                                                        Completed
+                                                    </Badge>
+                                                ) : isPartial ? (
+                                                    <Badge className="bg-blue-600 hover:bg-blue-600">
+                                                        Partial
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="secondary">
+                                                        Not completed
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+
+                                </div>
+
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
-          </div>
         </div>
     );
 }
