@@ -79,6 +79,7 @@ type ContextType = {
     setEvents: (date: CalendarEvent[]) => void;
     onChangeView?: (view: View) => void;
     onEventClick?: (event: CalendarEvent) => void;
+    onDateClick?: (date: Date) => void;
     enableHotkeys?: boolean;
     today: Date;
 };
@@ -102,6 +103,7 @@ type CalendarProps = {
     enableHotkeys?: boolean;
     onChangeView?: (view: View) => void;
     onEventClick?: (event: CalendarEvent) => void;
+    onDateClick?: (date: Date) => void;
 };
 
 const Calendar = ({
@@ -111,6 +113,7 @@ const Calendar = ({
     enableHotkeys = true,
     view: _defaultMode = 'month',
     onEventClick,
+    onDateClick,
     events: defaultEvents = [],
     onChangeView,
 }: CalendarProps) => {
@@ -153,6 +156,7 @@ const Calendar = ({
                 onEventClick,
                 onChangeView,
                 today: new Date(),
+                onDateClick,
             }}
         >
             {children}
@@ -326,7 +330,7 @@ const CalendarWeekView = () => {
 };
 
 const CalendarMonthView = () => {
-    const { date, view, events, locale } = useCalendar();
+    const { date, view, events, locale, setDate, onDateClick } = useCalendar();
 
     const monthDates = useMemo(() => getDaysInMonth(date), [date]);
     const weekDays = useMemo(() => generateWeekdays(locale), [locale]);
@@ -357,10 +361,23 @@ const CalendarMonthView = () => {
                     return (
                         <div
                             className={cn(
-                                'ring-1 p-2 text-sm text-muted-foreground ring-border overflow-auto',
+                                'ring-1 p-2 text-sm text-muted-foreground ring-border overflow-auto cursor-pointer',
                                 !isSameMonth(date, _date) && 'text-muted-foreground/50'
                             )}
                             key={_date.toString()}
+                            onClick={() => {
+                                setDate(_date);
+                                onDateClick?.(_date);
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    setDate(_date);
+                                    onDateClick?.(_date);
+                                }
+                            }}
                         >
                             <span
                                 className={cn(
@@ -384,9 +401,6 @@ const CalendarMonthView = () => {
                                             )}
                                         ></div>
                                         <span className="flex-1 truncate">{event.title}</span>
-                                        <time className="tabular-nums text-muted-foreground/50 text-xs">
-                                            {format(event.start, 'HH:mm')}
-                                        </time>
                                     </div>
                                 );
                             })}
@@ -545,7 +559,12 @@ const CalendarTodayTrigger = forwardRef<
     HTMLButtonElement,
     React.HTMLAttributes<HTMLButtonElement>
 >(({ children, onClick, ...props }, ref) => {
-    const { setDate, enableHotkeys, today } = useCalendar();
+    const {
+        setDate,
+        enableHotkeys,
+        today,
+        onDateClick
+    } = useCalendar();
 
     useHotkeys('t', () => jumpToToday(), {
         enabled: enableHotkeys,
@@ -553,7 +572,8 @@ const CalendarTodayTrigger = forwardRef<
 
     const jumpToToday = useCallback(() => {
         setDate(today);
-    }, [today, setDate]);
+        onDateClick?.(today);
+    }, [today, setDate, onDateClick]);
 
     return (
         <Button

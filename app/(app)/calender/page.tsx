@@ -1,22 +1,10 @@
 
-import {
-    Calendar,
-    CalendarCurrentDate,
-    CalendarDayView,
-    CalendarMonthView,
-    CalendarNextTrigger,
-    CalendarPrevTrigger,
-    CalendarTodayTrigger,
-    CalendarViewTrigger,
-    CalendarWeekView,
-    CalendarYearView,
-    type CalendarEvent,
-} from "@/components/full-calender";
-
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getServerSession } from "next-auth";
+import { formatInTimeZone } from "date-fns-tz";
+
 import { NEXT_AUTH } from "@/lib/authOptions";
 import prisma from "@/lib/prisma";
+import { HabitCalendar } from "@/components/calendar/habit-calendar";
 
 export default async function CalenderPage() {
     const session = await getServerSession(NEXT_AUTH);
@@ -25,110 +13,68 @@ export default async function CalenderPage() {
         return null;
     }
 
-    // Fetch actual habit activity belonging to the logged-in user.
-    const stats = await prisma.habitDailyStat.findMany({
-        where: {
-            userId: session.user.id,
-        },
-        include: {
-            habit: {
-                select: {
-                    id: true,
-                    title: true,
-                    color: true,
-                },
+    const timezone = session.user.timezone || "UTC";
+    const userId = session.user.id;
+
+    const [habits, dailyStats] = await Promise.all([
+        prisma.habit.findMany({
+            where: {
+                userId,
             },
-        },
-        orderBy: {
-            date: "asc",
-        },
-    });
+            select: {
+                id: true,
+                title: true,
+                color: true,
+                goalType: true,
+                targetPerDay: true,
+                startDate: true,
+                endDate: true,
+            },
+            orderBy: {
+                order: "asc",
+            },
+        }),
 
-    // Convert database records into calendar events.
-    const events: CalendarEvent[] = stats.map((stat) => {
-        const start = new Date(stat.date);
-        start.setHours(9, 0, 0, 0);
+        prisma.habitDailyStat.findMany({
+            where: {
+                userId,
+            },
+            select: {
+                id: true,
+                habitId: true,
+                date: true,
+                completionCount: true,
+                targetCount: true,
+            },
+            orderBy: {
+                date: "asc",
+            },
+        }),
+    ]);
 
-        const end = new Date(start);
-        end.setMinutes(30);
+    const formattedHabits = habits.map((habit) => ({
+        ...habit,
+        startDate: habit.startDate.toISOString(),
+        endDate: habit.endDate?.toISOString() ?? null,
+    }));
 
-        let color: CalendarEvent["color"] = "default";
-
-        if (stat.completionCount >= stat.targetCount) {
-            color = "green";
-        } else if (stat.completionCount > 0) {
-            color = "blue";
-        }
-
-        return {
-            id: stat.id,
-            start,
-            end,
-            title: `${stat.habit.title} (${stat.completionCount}/${stat.targetCount})`,
-            color,
-        };
-    });
+    const formattedStats = dailyStats.map((stat) => ({
+        id: stat.id,
+        habitId: stat.habitId,
+        dateKey: formatInTimeZone(
+            stat.date,
+            timezone,
+            "yyyy-MM-dd"
+        ),
+        completionCount: stat.completionCount,
+        targetCount: stat.targetCount,
+    }));
 
     return (
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-            <Calendar events={events} view="month">
-                <div className="flex flex-col h-[calc(100vh-8rem)]">
-                    {/* Calendar toolbar */}
-                    <div className="flex flex-wrap items-center gap-2 px-4 lg:px-6 mb-6">
-                        <CalendarViewTrigger
-                            view="day"
-                            className="aria-current:bg-accent"
-                        >
-                            Day
-                        </CalendarViewTrigger>
-
-                        <CalendarViewTrigger
-                            view="week"
-                            className="aria-current:bg-accent"
-                        >
-                            Week
-                        </CalendarViewTrigger>
-
-                        <CalendarViewTrigger
-                            view="month"
-                            className="aria-current:bg-accent"
-                        >
-                            Month
-                        </CalendarViewTrigger>
-
-                        <CalendarViewTrigger
-                            view="year"
-                            className="aria-current:bg-accent"
-                        >
-                            Year
-                        </CalendarViewTrigger>
-
-                        <div className="flex-1" />
-
-                        <CalendarCurrentDate />
-
-                        <CalendarPrevTrigger>
-                            <ChevronLeft size={18} />
-                        </CalendarPrevTrigger>
-
-                        <CalendarTodayTrigger>
-                            Today
-                        </CalendarTodayTrigger>
-
-                        <CalendarNextTrigger>
-                            <ChevronRight size={18} />
-                        </CalendarNextTrigger>
-                    </div>
-
-                    {/* Calendar views */}
-                    <div className="flex-1 overflow-auto px-4 lg:px-6 relative">
-                        <CalendarDayView />
-                        <CalendarWeekView />
-                        <CalendarMonthView />
-                        <CalendarYearView />
-                    </div>
-                </div>
-            </Calendar>
-        </div>
+        <HabitCalendar
+            habits={formattedHabits}
+            stats={formattedStats}
+            timezone={timezone}
+        />
     );
 }
