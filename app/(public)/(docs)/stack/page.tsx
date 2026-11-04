@@ -1,121 +1,272 @@
-import { LucideProps } from "lucide-react";
-import Image from "next/image";
 
-type AppType = {
-    name: string;
-    description: string;
-    icon: string;
-}
+import {
+  Code2,
+  Database,
+  Fingerprint,
+  Layers3,
+  Palette,
+  Server,
+  ShieldCheck,
+  Workflow,
+  Wrench,
+  BarChart3,
+} from "lucide-react";
 
-const apps: AppType[] = [
-    {
+const technologyGroups = [
+  {
+    title: "Frontend Development",
+    description: "Building the user interface and interactive experiences.",
+    icon: Palette,
+    technologies: [
+      {
         name: "Next.js",
-        description: "App router based React framework powering the Habit Kit frontend and routing.",
-        icon: "/logo/nextjs.svg"
-    },
-    {
+        description: "React framework using the App Router for pages, layouts and server-side capabilities.",
+      },
+      {
         name: "React",
-        description: "Modern component-based UI library used to build interactive habit experiences.",
-        icon: "/logo/react.svg"
-    },
-    {
+        description: "Component-based library for building interactive user interfaces.",
+      },
+      {
         name: "TypeScript",
-        description: "Type-safe codebase for more reliable development and easier refactoring.",
-        icon: "/logo/typescript.svg"
-    },
-    {
+        description: "Static typing that improves code reliability and maintainability.",
+      },
+      {
         name: "Tailwind CSS",
-        description: "Utility-first styling for a clean, responsive and consistent interface.",
-        icon: "/logo/tailwind.svg"
-    },
-    {
+        description: "Utility-first CSS framework for responsive application styling.",
+      },
+      {
         name: "shadcn/ui",
-        description: "Accessible, unstyled component primitives used as the base for Habit Kit’s UI.",
-        icon: "/logo/shadcn.svg"
-    },
-    {
-        name: "Prisma",
-        description: "Type-safe ORM used to model and access the Habit Kit database.",
-        icon: "/logo/prisma.svg"
-    },
-    {
+        description: "Reusable interface components built on accessible UI primitives.",
+      },
+      {
+        name: "Lucide React",
+        description: "Icon library used throughout the application interface.",
+      },
+    ],
+  },
+  {
+    title: "Backend and Database",
+    description: "Managing application logic and persistent data.",
+    icon: Database,
+    technologies: [
+      {
         name: "PostgreSQL",
-        description: "Reliable relational database for storing all habit and user data.",
-        icon: "/logo/postgresql.svg"
-    },
-    {
+        description: "Relational database used to store users, habits, categories and progress records.",
+      },
+      {
+        name: "Prisma ORM 7",
+        description: "Type-safe ORM for database models, queries and relationships.",
+      },
+      {
+        name: "Next.js API Routes",
+        description: "Application endpoints for handling client requests and server-side operations.",
+      },
+      {
+        name: "node-postgres (pg)",
+        description: "PostgreSQL driver used by the application database adapter.",
+      },
+    ],
+  },
+  {
+    title: "Authentication and Validation",
+    description: "Handling user identity and application data validation.",
+    icon: ShieldCheck,
+    technologies: [
+      {
         name: "NextAuth.js",
-        description: "Authentication layer handling secure login and session management.",
-        icon: "/logo/nextauth.svg"
-    },
-    {
+        description: "Authentication and session management for the application.",
+      },
+      {
+        name: "Prisma Adapter",
+        description: "Connects NextAuth authentication records to the Prisma database.",
+      },
+      {
         name: "bcrypt",
-        description: "Password hashing library used to securely store user credentials.",
-        icon: "/logo/bcrypt.svg"
-    },
-    {
-        name: "Recharts",
-        description: "Charting library used to visualize habit analytics and progress.",
-        icon: "/logo/react.svg"
-    },
-    {
+        description: "Password hashing library for credential security.",
+      },
+      {
         name: "Zod",
-        description: "Schema validation library ensuring safe and correct data throughout the app.",
-        icon: "/logo/zod.svg"
-    },
-    {
-        name: "Vercel",
-        description: "Hosting and deployment platform providing fast, global delivery.",
-        icon: "/logo/vercel.svg"
-    }
+        description: "Schema validation library for validating structured data.",
+      },
+    ],
+  },
+  {
+    title: "UI and Data Visualization",
+    description: "Improving interaction, analytics and data presentation.",
+    icon: BarChart3,
+    technologies: [
+      {
+        name: "Recharts",
+        description: "Charting library for visualizing habit progress and analytics.",
+      },
+      {
+        name: "Framer Motion",
+        description: "Animation library for interactive interface transitions.",
+      },
+      {
+        name: "React Hook Form",
+        description: "Form state management and form handling.",
+      },
+      {
+        name: "TanStack Table",
+        description: "Headless table utilities for structured data interfaces.",
+      },
+      {
+        name: "dnd-kit",
+        description: "Drag-and-drop toolkit for interactive sortable interfaces.",
+      },
+    ],
+  },
+  {
+    title: "Development Tools",
+    description: "Supporting development, styling and code quality.",
+    icon: Wrench,
+    technologies: [
+      {
+        name: "pnpm",
+        description: "Package manager used to install and manage project dependencies.",
+      },
+      {
+        name: "ESLint",
+        description: "Static code analysis and linting.",
+      },
+      {
+        name: "PostCSS",
+        description: "CSS processing used with the Tailwind CSS setup.",
+      },
+      {
+        name: "TypeScript Compiler",
+        description: "Type checking and compilation support.",
+      },
+    ],
+  },
+];
+
+const highlights = [
+  { label: "Frontend", value: "Next.js + React" },
+  { label: "Language", value: "TypeScript" },
+  { label: "Database", value: "PostgreSQL" },
+  { label: "ORM", value: "Prisma" },
+  { label: "Authentication", value: "NextAuth.js" },
+  { label: "Package Manager", value: "pnpm" },
 ];
 
 export default function StackPage() {
-    return (
-        <section className="py-8 sm:py-16 lg:py-24">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  return (
+    <main className="mx-auto max-w-6xl space-y-12 px-5 py-12 md:px-8">
+      <header className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Code2 className="h-5 w-5" />
+          <span className="text-xs font-semibold tracking-widest">
+            ENGINEERING
+          </span>
+        </div>
 
-                <div className="mb-12 text-center space-y-4">
-                    <p className="text-primary text-sm font-medium uppercase">
-                        Technology Stack
-                    </p>
+        <h1 className="text-3xl font-bold tracking-tight md:text-5xl">
+          Technology Stack
+        </h1>
 
-                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold">
-                        Built with modern technologies
-                    </h2>
+        <p className="max-w-3xl text-base leading-7 text-muted-foreground">
+          Discover the technologies, frameworks and development
+          tools used to build HabitFlow. The stack combines a
+          modern React frontend, type-safe backend development
+          and relational data storage.
+        </p>
+      </header>
 
-                    <p className="text-muted-foreground text-xl">
-                        Our platform is powered by a carefully selected stack designed for performance, scalability, and reliability.
-                    </p>
+      <section className="rounded-2xl border bg-card p-6 md:p-8">
+        <div className="flex items-center gap-2">
+          <Layers3 className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">
+            Stack Overview
+          </h2>
+        </div>
 
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {apps.map((app) => (
-                        <IntegrationCard key={app.name} app={app} />
-                    ))}
-                </div>
-
+        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3">
+          {highlights.map((item) => (
+            <div
+              key={item.label}
+              className="rounded-lg bg-muted/40 p-4"
+            >
+              <p className="text-xs text-muted-foreground">
+                {item.label}
+              </p>
+              <p className="mt-2 text-sm font-semibold">
+                {item.value}
+              </p>
             </div>
-        </section>
-    )
-}
+          ))}
+        </div>
+      </section>
 
-function IntegrationCard({ app }: { app: AppType }) {
-    return (
-        <div className="group flex flex-col gap-6 rounded-xl py-6 hover:bg-muted transition-colors border">
+      <section className="space-y-8">
+        <div>
+          <h2 className="text-2xl font-bold">
+            Technologies Used
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Explore the technologies grouped by their role in HabitFlow.
+          </p>
+        </div>
 
-            <div className="px-6 flex flex-col gap-6">
+        {technologyGroups.map((group) => {
+          const Icon = group.icon;
 
-                <div className={`flex size-12 items-center justify-center rounded-lg bg-primary/20`}>
-                    <Image src={app.icon} alt={app.name} className="size-7 object-contain" width={12} height={12} />
+          return (
+            <div key={group.title} className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary/10 p-3">
+                  <Icon className="h-5 w-5 text-primary" />
                 </div>
 
                 <div>
-                    <h3 className="text-2xl font-medium mb-3.5">{app.name}</h3>
-                    <p className="text-muted-foreground">{app.description}</p>
+                  <h3 className="font-semibold">
+                    {group.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {group.description}
+                  </p>
                 </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {group.technologies.map((technology) => (
+                  <article
+                    key={technology.name}
+                    className="rounded-xl border bg-card p-5 transition-colors hover:border-primary/40"
+                  >
+                    <h4 className="font-semibold">
+                      {technology.name}
+                    </h4>
+
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {technology.description}
+                    </p>
+                  </article>
+                ))}
+              </div>
             </div>
+          );
+        })}
+      </section>
+
+      <section className="rounded-xl border border-dashed p-6">
+        <div className="flex items-center gap-3">
+          <Fingerprint className="h-5 w-5 text-primary" />
+          <h2 className="font-semibold">
+            Engineering Approach
+          </h2>
         </div>
-    );
+
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
+          HabitFlow uses TypeScript across its application,
+          Prisma for structured database access, reusable
+          React components for the interface and PostgreSQL
+          for persistent relational data. These technologies
+          help keep the codebase organized, maintainable
+          and extensible.
+        </p>
+      </section>
+    </main>
+  );
 }
