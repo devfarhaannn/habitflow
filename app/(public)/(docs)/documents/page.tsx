@@ -1,208 +1,217 @@
 
+import Link from "next/link";
 import {
+  ArrowRight,
   BookOpen,
-  CheckCircle2,
-  CalendarDays,
-  Bell,
-  ChartNoAxesCombined,
+  Code2,
   Database,
-  Settings,
-  Users,
-  FileSpreadsheet,
+  Layers3,
+  Rocket,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
-const sections = [
+const documentation = [
   {
-    title: "Getting Started",
-    icon: BookOpen,
-    description: "Learn the basics of HabitFlow.",
-    items: [
-      "Sign in to your HabitFlow account.",
-      "Explore your Dashboard and habit overview.",
-      "Create your first habit.",
-      "Choose a category, frequency and target.",
-    ],
+    title: "Project Overview",
+    description:
+      "Understand HabitFlow, its purpose, core capabilities and the problems it solves.",
+    href: "/documents/features",
+    icon: Sparkles,
+    label: "Introduction",
   },
   {
-    title: "Managing Habits",
-    icon: CheckCircle2,
-    description: "Create and manage your daily routines.",
-    items: [
-      "Create habits with a name and description.",
-      "Organize habits using categories.",
-      "Mark habits as completed.",
-      "Track current and longest streaks.",
-      "Edit, archive or delete habits.",
-    ],
+    title: "System Architecture",
+    description:
+      "Explore the application architecture, system components and how they communicate.",
+    href: "/documents/architecture",
+    icon: Layers3,
+    label: "Architecture",
   },
   {
-    title: "Calendar",
-    icon: CalendarDays,
-    description: "Review your habit activity over time.",
-    items: [
-      "Open Calendar to view your habit history.",
-      "Review completed activities.",
-      "Navigate between dates to inspect progress.",
-    ],
-  },
-  {
-    title: "Reminders",
-    icon: Bell,
-    description: "Manage reminders for your habits.",
-    items: [
-      "Create a reminder for a selected habit.",
-      "Choose a reminder time.",
-      "Select the weekdays for the reminder.",
-      "Enable, disable, edit or delete reminders.",
-    ],
-  },
-  {
-    title: "Analytics",
-    icon: ChartNoAxesCombined,
-    description: "Understand your habit performance.",
-    items: [
-      "View habit completion statistics.",
-      "Monitor streaks and consistency.",
-      "Understand your progress through analytics.",
-    ],
-  },
-  {
-    title: "Export and Import Data",
+    title: "Database Schema",
+    description:
+      "Understand database models, relationships, entities and data organization.",
+    href: "/documents/schema",
     icon: Database,
-    description: "Keep a backup of your habit data.",
-    items: [
-      "Open Export / Import Data.",
-      "Download your account backup as a JSON file.",
-      "Keep your backup somewhere safe.",
-      "Select a previous JSON backup to restore your data.",
-      "Review the import confirmation before proceeding.",
-    ],
+    label: "Database",
   },
   {
-    title: "Download Reports",
-    icon: FileSpreadsheet,
-    description: "Export your habit progress into a spreadsheet.",
-    items: [
-      "Open Download Report.",
-      "Review your habit statistics.",
-      "Select Download CSV.",
-      "Open the file in Excel, Numbers or Google Sheets.",
-    ],
+    title: "Technology Stack",
+    description:
+      "Discover the technologies, frameworks and libraries used to build HabitFlow.",
+    href: "/documents/stack",
+    icon: Code2,
+    label: "Technologies",
   },
   {
-    title: "Settings and Community",
-    icon: Settings,
-    description: "Explore additional application features.",
-    items: [
-      "Visit Settings to view your account preferences.",
-      "Change the application appearance using the theme control.",
-      "Visit Community to explore its available features.",
-    ],
+    title: "Deployment Guide",
+    description:
+      "Learn how to configure, build and deploy the HabitFlow application.",
+    href: "/documents/deployment",
+    icon: Rocket,
+    label: "Deployment",
   },
+  {
+    title: "Project Gallery",
+    description:
+      "Explore the application interface and its important screens.",
+    href: "/documents/gallery",
+    icon: BookOpen,
+    label: "Gallery",
+  },
+];
+
+const highlights = [
+  "Full-stack habit tracking application",
+  "Google OAuth authentication",
+  "Habit management and progress tracking",
+  "Calendar, analytics and reminders",
+  "Data export and import",
+  "PostgreSQL database with Prisma ORM",
 ];
 
 export default function DocumentationPage() {
   return (
-    <main className="mx-auto w-full max-w-6xl space-y-8 px-5 py-10 md:px-8">
+    <main className="mx-auto w-full max-w-6xl space-y-12 px-5 py-12 md:px-8">
+
       {/* Header */}
-      <header className="space-y-4">
-        <div className="flex items-center gap-2 text-primary">
-          <BookOpen className="h-6 w-6" />
-          <span className="text-sm font-semibold">
-            HABITFLOW USER GUIDE
-          </span>
+      <section className="space-y-5">
+        <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium text-muted-foreground">
+          <BookOpen className="h-4 w-4 text-primary" />
+          HABITFLOW / DOCUMENTATION
         </div>
 
-        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-          Documentation
-        </h1>
+        <div className="max-w-3xl space-y-4">
+          <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
+            Technical Documentation
+          </h1>
 
-        <p className="max-w-2xl text-muted-foreground">
-          Everything you need to know about HabitFlow.
-          Learn how to manage your habits, build consistent
-          routines and track your personal progress.
-        </p>
-      </header>
+          <p className="text-base leading-7 text-muted-foreground md:text-lg">
+            Explore the engineering behind HabitFlow. This
+            documentation covers the project architecture,
+            database design, technology stack, features and
+            deployment process.
+          </p>
+        </div>
+      </section>
 
-      {/* Introduction */}
-      <section className="rounded-xl border bg-card p-6">
-        <h2 className="text-xl font-semibold">
-          Welcome to HabitFlow
-        </h2>
+      {/* Project introduction */}
+      <section className="rounded-2xl border bg-card p-6 md:p-8">
+        <div className="flex items-center gap-2 text-primary">
+          <Sparkles className="h-5 w-5" />
+          <h2 className="text-xl font-semibold">
+            About HabitFlow
+          </h2>
+        </div>
 
-        <p className="mt-3 text-sm leading-7 text-muted-foreground">
-          HabitFlow is a habit tracking application designed
-          to help you build better routines and stay consistent.
-          Create habits, monitor your daily activities, manage
-          reminders and understand your progress through analytics.
+        <p className="mt-4 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">
+          HabitFlow is a modern habit tracking application
+          designed to help users build consistent routines,
+          manage daily activities and understand their progress.
+          It combines habit management, reminders, calendar
+          tracking and analytics in one application.
         </p>
       </section>
 
-      {/* Documentation Sections */}
-      <section className="space-y-5">
+      {/* Documentation navigation */}
+      <section className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold">
-            User Guide
+          <h2 className="text-2xl font-bold tracking-tight">
+            Explore Documentation
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Explore the different features of HabitFlow.
+          <p className="mt-2 text-sm text-muted-foreground">
+            Select a topic to explore the technical details.
           </p>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          {sections.map((section, index) => {
-            const Icon = section.icon;
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {documentation.map((item) => {
+            const Icon = item.icon;
 
             return (
-              <article
-                key={section.title}
-                className="rounded-xl border bg-card p-5 transition-colors hover:bg-muted/30"
+              <Link
+                key={item.title}
+                href={item.href}
+                className="group flex flex-col rounded-xl border bg-card p-5 transition-all hover:-translate-y-1 hover:border-primary/50 hover:shadow-md"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-center justify-between">
                   <div className="rounded-lg bg-primary/10 p-3">
                     <Icon className="h-5 w-5 text-primary" />
                   </div>
 
-                  <div>
-                    <h3 className="font-semibold">
-                      {index + 1}. {section.title}
-                    </h3>
-
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {section.description}
-                    </p>
-                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
                 </div>
 
-                <ul className="mt-5 space-y-3">
-                  {section.items.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-start gap-2 text-sm leading-6"
-                    >
-                      <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-primary" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </article>
+                <span className="mt-5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {item.label}
+                </span>
+
+                <h3 className="mt-2 font-semibold">
+                  {item.title}
+                </h3>
+
+                <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
+                  {item.description}
+                </p>
+              </Link>
             );
           })}
         </div>
       </section>
 
-      {/* Help */}
-      <section className="rounded-xl border border-dashed p-6">
-        <div className="flex items-center gap-3">
-          <Users className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold">Need Help?</h2>
+      {/* Main features */}
+      <section className="grid gap-8 md:grid-cols-2">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">
+              Core Capabilities
+            </h2>
+          </div>
+
+          <ul className="space-y-3">
+            {highlights.map((item) => (
+              <li
+                key={item}
+                className="flex items-start gap-3 text-sm text-muted-foreground"
+              >
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Refer to this documentation whenever you need
-          help understanding HabitFlow features.
-        </p>
+        <div className="rounded-xl border bg-muted/30 p-6">
+          <div className="flex items-center gap-2">
+            <Code2 className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">
+              For Developers
+            </h2>
+          </div>
+
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">
+            Whether you are exploring the codebase, learning
+            the system design or contributing to the project,
+            these documents provide a starting point for
+            understanding HabitFlow.
+          </p>
+
+          <Link
+            href="/documents/stack"
+            className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+          >
+            Explore the technology stack
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </section>
+
+      {/* Footer */}
+      <footer className="border-t pt-6 text-center text-sm text-muted-foreground">
+        HabitFlow Technical Documentation
+      </footer>
     </main>
   );
 }
