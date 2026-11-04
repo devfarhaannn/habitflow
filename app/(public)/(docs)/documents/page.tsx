@@ -16,7 +16,7 @@ const documentation = [
     title: "Project Overview",
     description:
       "Understand HabitFlow, its purpose, core capabilities and the problems it solves.",
-    href: "/documents/features",
+    href: "/features",
     icon: Sparkles,
     label: "Introduction",
   },
@@ -24,7 +24,7 @@ const documentation = [
     title: "System Architecture",
     description:
       "Explore the application architecture, system components and how they communicate.",
-    href: "/documents/architecture",
+    href: "/architecture",
     icon: Layers3,
     label: "Architecture",
   },
@@ -32,7 +32,7 @@ const documentation = [
     title: "Database Schema",
     description:
       "Understand database models, relationships, entities and data organization.",
-    href: "/documents/schema",
+    href: "/schema",
     icon: Database,
     label: "Database",
   },
@@ -40,7 +40,7 @@ const documentation = [
     title: "Technology Stack",
     description:
       "Discover the technologies, frameworks and libraries used to build HabitFlow.",
-    href: "/documents/stack",
+    href: "/stack",
     icon: Code2,
     label: "Technologies",
   },
@@ -48,7 +48,7 @@ const documentation = [
     title: "Deployment Guide",
     description:
       "Learn how to configure, build and deploy the HabitFlow application.",
-    href: "/documents/deployment",
+    href: "/deployment",
     icon: Rocket,
     label: "Deployment",
   },
@@ -56,7 +56,7 @@ const documentation = [
     title: "Project Gallery",
     description:
       "Explore the application interface and its important screens.",
-    href: "/documents/gallery",
+    href: "/gallery",
     icon: BookOpen,
     label: "Gallery",
   },
@@ -96,7 +96,7 @@ export default function DocumentationPage() {
         </div>
       </section>
 
-      {/* Project introduction */}
+      {/* Project Introduction */}
       <section className="rounded-2xl border bg-card p-6 md:p-8">
         <div className="flex items-center gap-2 text-primary">
           <Sparkles className="h-5 w-5" />
@@ -114,12 +114,13 @@ export default function DocumentationPage() {
         </p>
       </section>
 
-      {/* Documentation navigation */}
+      {/* Documentation Navigation */}
       <section className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
             Explore Documentation
           </h2>
+
           <p className="mt-2 text-sm text-muted-foreground">
             Select a topic to explore the technical details.
           </p>
@@ -160,11 +161,12 @@ export default function DocumentationPage() {
         </div>
       </section>
 
-      {/* Main features */}
+      {/* Core Capabilities */}
       <section className="grid gap-8 md:grid-cols-2">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
+
             <h2 className="text-xl font-semibold">
               Core Capabilities
             </h2>
@@ -186,6 +188,7 @@ export default function DocumentationPage() {
         <div className="rounded-xl border bg-muted/30 p-6">
           <div className="flex items-center gap-2">
             <Code2 className="h-5 w-5 text-primary" />
+
             <h2 className="text-lg font-semibold">
               For Developers
             </h2>
@@ -199,7 +202,7 @@ export default function DocumentationPage() {
           </p>
 
           <Link
-            href="/documents/stack"
+            href="/stack"
             className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
           >
             Explore the technology stack
