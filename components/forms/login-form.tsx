@@ -37,7 +37,14 @@ export function LoginForm({ ...props }: React.ComponentProps<typeof Card>) {
     })
 
     async function handleGoogleLogin() {
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const detectedTimezone =
+            Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        const timezone =
+            detectedTimezone === "Asia/Calcutta"
+                ? "Asia/Kolkata"
+                : detectedTimezone;
+
 
         document.cookie = `habitflow-timezone=${encodeURIComponent(timezone)}; path=/; max-age=300; SameSite=Lax`;
 

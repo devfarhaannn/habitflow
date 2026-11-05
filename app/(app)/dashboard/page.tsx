@@ -4,7 +4,7 @@ import { HabitOverviewCards } from "@/components/dashboard/habit-overview-card"
 import { HabitPerformanceSection } from "@/components/dashboard/habit-performance-section"
 import { TopHabitsCard } from "@/components/dashboard/habit-top-card"
 import { NEXT_AUTH } from "@/lib/authOptions"
-import { getDashboardData, updateTimezone } from "@/lib/server/dashboard"
+import { getDashboardData } from "@/lib/server/dashboard"
 import { getServerSession } from "next-auth"
 
 
@@ -14,12 +14,7 @@ export default async function DashboardPage() {
         return
     }
     const userId = session.user.id;
-    const timezone = session.user.timezone;
-
-    if (session?.user?.timezone === "UTC") {
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-        await updateTimezone(userId, timezone);
-    }
+    const timezone = session.user.timezone || "UTC";
 
     const data = await getDashboardData(userId, timezone);
 

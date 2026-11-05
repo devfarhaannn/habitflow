@@ -78,20 +78,32 @@ export const NEXT_AUTH: NextAuthOptions = {
             return true;
         },
         jwt: async ({ token, user, trigger }: any) => {
-            if (user) {
-                token.id = (user as any).id;
-                token.name = user.name;
+            if (user?.id) {
+                const dbUser = await prisma.user.findUnique({
+                    where: {
+                        id: user.id
+                    },
+                    select: {
+                        name: true,
+                        timezone: true
+                    }
+                });
+
+                token.id = user.id;
+                token.name = dbUser?.name ?? user.name;
                 token.email = user.email;
-                token.timezone = user.timezone;
+                token.timezone = dbUser?.timezone ?? "UTC";
             }
 
             if (trigger === "update" && token.id) {
                 const updatedUser = await prisma.user.findUnique({
-                    where: { id: token.id },
+                    where: {
+                        id: token.id
+                    },
                     select: {
                         name: true,
-                        timezone: true,
-                    },
+                        timezone: true
+                    }
                 });
 
                 if (updatedUser) {

@@ -5,7 +5,21 @@ export async function POST(req: Request) {
     const { name, email, password, timezone } = await req.json();
 
     if (!name || !email || !password || !timezone) {
-        return new Response(JSON.stringify({ error: "MISSING_FIELDS" }), { status: 400 });
+        return Response.json(
+            { error: "MISSING_FIELDS", code: "MISSING_FIELDS" },
+            { status: 400 }
+        );
+    }
+
+    try {
+        new Intl.DateTimeFormat("en-US", {
+            timeZone: timezone
+        });
+    } catch {
+        return Response.json(
+            { error: "INVALID_TIMEZONE", code: "INVALID_TIMEZONE" },
+            { status: 400 }
+        );
     }
 
     const CheckExisting = await prisma.user.findUnique({ where: { email } });
