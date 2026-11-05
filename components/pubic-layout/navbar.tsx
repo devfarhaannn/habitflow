@@ -312,7 +312,7 @@ export function Navigation() {
                         <ul className="grid w-[150px] gap-4">
                             <li>
                                 <NavigationMenuLink asChild>
-                                    <Link href="#">Site Uptime</Link>
+                                    <Link href="/uptime">Site Uptime</Link>
                                 </NavigationMenuLink>
                                 <NavigationMenuLink asChild>
                                     <Link href="/documents">Documentation</Link>
