@@ -75,7 +75,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group"
-import { OctagonAlert, RefreshCcw, Undo } from "lucide-react"
+import { RefreshCcw, Undo } from "lucide-react"
 import { IconRenderer } from "../icon-picker/icon-picker"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -282,6 +282,176 @@ function HabitHeatMap({
 }
 
 
+function HabitFocusView({
+  habits,
+  completions,
+  onIncrement,
+}: {
+  habits: z.infer<typeof HabitPageSchema>[];
+  completions: Record<string, number>;
+  onIncrement: (id: string, target: number) => void;
+}) {
+  const activeHabits = habits.filter(
+    (habit) => habit.status === "ACTIVE"
+  );
+
+  const totalTarget = activeHabits.reduce(
+    (total, habit) => total + habit.targetPerDay,
+    0
+  );
+
+  const totalCompleted = activeHabits.reduce(
+    (total, habit) =>
+      total + (completions[habit.id] ?? habit.todaysCompletion),
+    0
+  );
+
+  const progress =
+    totalTarget > 0
+      ? Math.min((totalCompleted / totalTarget) * 100, 100)
+      : 0;
+
+  if (activeHabits.length === 0) {
+    return (
+      <div className="rounded-xl border p-10 text-center">
+        <h3 className="font-semibold">No active habits</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Create or activate a habit to start your daily focus.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Daily Overview */}
+      <div className="rounded-xl border bg-card p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">Today's Focus</h2>
+            <p className="text-sm text-muted-foreground">
+              Stay consistent and complete your daily habits.
+            </p>
+          </div>
+
+          <Badge variant="outline">
+            {activeHabits.length} Active Habits
+          </Badge>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              Overall Progress
+            </span>
+            <span className="font-semibold">
+              {totalCompleted}/{totalTarget}
+            </span>
+          </div>
+
+          <div className="h-3 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          <p className="text-right text-xs text-muted-foreground">
+            {Math.round(progress)}% completed
+          </p>
+        </div>
+      </div>
+
+      {/* Active Habit List */}
+      <div className="space-y-3">
+        <h3 className="font-semibold">Your Daily Habits</h3>
+
+        {activeHabits.map((habit) => {
+          const completed =
+            completions[habit.id] ?? habit.todaysCompletion;
+
+          const target = habit.targetPerDay;
+
+          const habitProgress =
+            target > 0
+              ? Math.min((completed / target) * 100, 100)
+              : 0;
+
+          return (
+            <div
+              key={habit.id}
+              className="flex flex-col gap-4 rounded-xl border bg-card p-4 sm:flex-row sm:items-center"
+            >
+              {/* Habit Information */}
+              <div className="flex flex-1 items-center gap-3">
+                <div
+                  className="flex size-11 shrink-0 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: `${habit.color}20` }}
+                >
+                  <IconRenderer
+                    icon={habit.icon}
+                    className="size-6"
+                    style={{ color: habit.color }}
+                  />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <h4 className="truncate font-medium">
+                    {habit.title}
+                  </h4>
+
+                  <p className="text-xs text-muted-foreground">
+                    {habit.category?.title ?? "Uncategorized"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress */}
+              <div className="w-full space-y-1 sm:max-w-40">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    Progress
+                  </span>
+                  <span>
+                    {completed}/{target}
+                  </span>
+                </div>
+
+                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${habitProgress}%`,
+                      backgroundColor: habit.color,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2">
+                <CompletionButton
+                  completionCount={completed}
+                  targetPerDay={target}
+                  color={habit.color}
+                  onIncrement={() => onIncrement(habit.id, target)}
+                />
+
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/habits/${habit.id}`}>
+                    Details
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
 export function DataTable1({
   data: initialData,
   userId
@@ -297,27 +467,32 @@ export function DataTable1({
   const router = useRouter();
   const pathname = usePathname();
 
-  const handleViewChange = (value: string) => {
+ const handleViewChange = (value: string) => {
     setActiveView(value);
 
     const params = new URLSearchParams(searchParams.toString());
 
-    if (value === "card") {
-      params.set("view", "card");
+    if (value === "table") {
+        params.delete("view");
     } else {
-      params.delete("view");
+        params.set("view", value);
     }
 
     const query = params.toString();
 
     router.replace(
-      query ? `${pathname}?${query}` : pathname,
-      { scroll: false }
+        query ? `${pathname}?${query}` : pathname,
+        { scroll: false }
     );
-  };
+};
 
-  const initialView =
-    searchParams.get("view") === "card" ? "card" : "table";
+  const allowedViews = ["table", "heat-map", "card", "focus"];
+
+  const requestedView = searchParams.get("view");
+
+  const initialView = allowedViews.includes(requestedView ?? "")
+    ? requestedView!
+    : "table";
 
   const [activeView, setActiveView] = React.useState(initialView);
 
@@ -1126,18 +1301,15 @@ export function DataTable1({
         )}
       </TabsContent>
 
-
-      <TabsContent value="focus"
-        className="flex flex-col px-4 lg:px-6"
+      <TabsContent
+        value="focus"
+        className="flex flex-col gap-4 px-4 lg:px-6"
       >
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed">
-          <div className="flex w-full h-full items-center justify-center">
-            <div className="flex flex-col item-center justify-center gap-4">
-              <OctagonAlert className="mx-auto" size={40} />
-              <span className="text-xl">This view is currently not available</span>
-            </div>
-          </div>
-        </div>
+        <HabitFocusView
+          habits={filteredHabits}
+          completions={completions}
+          onIncrement={incrementCompletion}
+        />
       </TabsContent>
 
     </Tabs>
