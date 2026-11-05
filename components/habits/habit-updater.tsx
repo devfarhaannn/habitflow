@@ -20,6 +20,8 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "../ui/calendar";
 import { Checkbox } from "../ui/checkbox";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
     item: z.infer<typeof HabitPageSchema>,
@@ -29,6 +31,8 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
 }) {
     const isMobile = useIsMobile()
     const { user } = useAuth();
+    const router = useRouter();
+    const [saving, setSaving] = useState(false);
 
     const form = useForm<z.infer<typeof editHabitSchema>>({
         resolver: zodResolver(editHabitSchema),
@@ -45,70 +49,114 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
             endDate: item.endDate,
         }
     })
+    useEffect(() => {
+        if (open) {
+            form.reset({
+                id: item.id,
+                title: item.title,
+                description: item.description ?? "",
+                goalType: item.goalType,
+                targetPerDay: item.targetPerDay,
+                status: item.status,
+                categoryId: item.categoryId,
+                icon: item.icon,
+                color: item.color,
+                endDate: item.endDate,
+            });
+        }
+    }, [item, open, form]);
 
-    function onSubmit(values: z.infer<typeof editHabitSchema>) {
-        const changedValues: Partial<typeof values> = {};
+    async function onSubmit(values: z.infer<typeof editHabitSchema>) {
+        const changedValues: Partial<z.infer<typeof editHabitSchema>> = {};
 
         (Object.keys(values) as Array<keyof typeof values>).forEach((key) => {
             const newValue = values[key];
             const oldValue = item[key];
 
-            // Skip undefined automatically
             if (newValue === undefined) return;
 
-            // Date comparison
-            if (newValue instanceof Date && oldValue instanceof Date) {
-                if (newValue.getTime() !== oldValue.getTime()) {
+            if (key === "endDate") {
+                const newDate = newValue
+                    ? new Date(newValue).getTime()
+                    : null;
+
+                const oldDate = oldValue
+                    ? new Date(oldValue).getTime()
+                    : null;
+
+                if (newDate !== oldDate) {
                     (changedValues as Record<string, unknown>)[key] = newValue;
                 }
+
                 return;
             }
 
-            // Normal comparison
             if (newValue !== oldValue) {
                 (changedValues as Record<string, unknown>)[key] = newValue;
             }
         });
 
-        // 🚀 If nothing changed → don’t call API
         if (Object.keys(changedValues).length === 0) {
-            toast("Nothing changed");
-            onOpenChange(!open);
+            toast.info("Nothing changed.");
+            onOpenChange(false);
             return;
         }
 
-        const payload = {
-            id: item.id,
-            ...changedValues,
-        };
+        try {
+            setSaving(true);
 
-        const updateHabit = async () => {
-            try {
-                await fetch(`/api/${user?.id}/habit/${item.id}`, {
+            const response = await fetch(
+                `/api/${user?.id}/habit/${item.id}`,
+                {
                     method: "PATCH",
                     headers: {
-                        'Content-Type': 'application/json',
+                        "Content-Type": "application/json",
                     },
-                    body: JSON.stringify(payload)
-                });
+                    body: JSON.stringify({
+                        id: item.id,
+                        ...changedValues,
+                    }),
+                }
+            );
 
-            } catch (error) {
-                console.error(error);
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                throw new Error(data?.error || "Failed to update habit.");
             }
-        };
 
-        updateHabit();
-        toast("Refresh page to see changes!");
-        onOpenChange(!open);
+            toast.success("Habit updated successfully!");
+
+            onOpenChange(false);
+            router.refresh();
+
+        } catch (error) {
+            console.error("Update habit error:", error);
+
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Something went wrong."
+            );
+        } finally {
+            setSaving(false);
+        }
     }
 
     return (
-        <Drawer direction={isMobile ? "bottom" : "right"} open={open} onOpenChange={(isOpen) => {
-            if (!isOpen) {
-                form.reset(); // 🔥 resets entire form to defaultValues
-            }
-            onOpenChange(isOpen);
-        }}>
+        <Drawer
+            direction={isMobile ? "bottom" : "right"}
+            open={open}
+            onOpenChange={(isOpen) => {
+                if (saving) return;
+
+                if (!isOpen) {
+                    form.reset();
+                }
+
+                onOpenChange(isOpen);
+            }}
+        >
             <DrawerContent>
 
                 <DrawerHeader className="gap-1">
@@ -198,7 +246,7 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                                 <FieldLabel htmlFor="form-rhf-demo-status">
                                                     Status
                                                 </FieldLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select value={field.value} onValueChange={field.onChange}>
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue />
@@ -238,7 +286,7 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                                 <FieldLabel htmlFor="form-rhf-demo-category">
                                                     Category
                                                 </FieldLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
+                                                <Select value={field.value ?? ""} onValueChange={field.onChange}>
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select category" />
@@ -292,9 +340,7 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                                 <FieldLabel htmlFor="form-rhf-demo-goalType">
                                                     Frequency
                                                 </FieldLabel>
-                                                <Select
-                                                    onValueChange={field.onChange}
-                                                    defaultValue={field.value}>
+                                                <Select value={field.value} onValueChange={field.onChange}>
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue />
@@ -371,7 +417,7 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                                 <PopoverContent className="w-auto p-0" align="start">
                                                     <Calendar
                                                         mode="single"
-                                                        // selected={field.value}
+                                                        selected={field.value ?? undefined}
                                                         onSelect={(date) => field.onChange(date)}
                                                         disabled={(date) => {
                                                             const today = new Date()
@@ -406,9 +452,13 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                             </div>
 
                             <DrawerFooter className="gap-4">
-                                <Button type="submit">Submit</Button>
+                                <Button type="submit" disabled={saving}>
+                                    {saving ? "Saving..." : "Save Changes"}
+                                </Button>
                                 <DrawerClose asChild>
-                                    <Button variant="outline">Camcel</Button>
+                                    <Button variant="outline" disabled={saving}>
+                                        Cancel
+                                    </Button>
                                 </DrawerClose>
                             </DrawerFooter>
 

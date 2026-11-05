@@ -378,6 +378,11 @@ export function DataTable1({
   const [pendingOrderChanges, setPendingOrderChanges] = React.useState<
     Record<string, number>
   >({})
+  React.useEffect(() => {
+    setData(initialData);
+    originalDataRef.current = initialData;
+    setPendingOrderChanges({});
+  }, [initialData]);
 
   // swith for submit and reset button
   // Add controls after adding habit data
