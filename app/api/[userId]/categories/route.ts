@@ -1,68 +1,71 @@
+
 import { NEXT_AUTH } from "@/lib/authOptions";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 type Params = Promise<{ userId: string }>;
 
-export async function GET(req: NextRequest, { params }: { params: Params }) {
-    const { userId } = await params;
-    const session = await getServerSession(NEXT_AUTH);
-
-    if (!userId || !session?.user?.id) {
-        return Response.json(
-            { error: "UserId is required or user is not authorized" },
-            { status: 401 }
-        );
-    }
-
-    if (userId !== session.user.id) {
-        return Response.json(
-            { error: "UserId not authorized" },
-            { status: 401 }
-        );
-    }
-
+export async function GET(
+    _: NextRequest,
+    { params }: { params: Params }
+) {
     try {
-        const categories = await prisma.habitCategory.findMany({
-            where: {
-                userId: userId
-            }, select: {
+        const { userId } = await params;
+        const session = await getServerSession(NEXT_AUTH);
+
+        // Check authentication
+        if (!session?.user?.id) {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        // Check authorization
+        if (userId !== session.user.id) {
+            return NextResponse.json(
+                { error: "Forbidden" },
+                { status: 403 }
+            );
+        }
+
+        // Fetch categories
+        let categories = await prisma.habitCategory.findMany({
+            where: { userId },
+            select: {
                 title: true,
                 id: true,
-            }
-        })
+            },
+        });
 
+        // Create default categories if none exist
         if (categories.length === 0) {
             await prisma.habitCategory.createMany({
                 data: [
-                    { title: "Health", userId: userId },
-                    { title: "Fitness", userId: userId },
-                    { title: "Productivity", userId: userId },
-                ]
+                    { title: "Health", userId },
+                    { title: "Fitness", userId },
+                    { title: "Productivity", userId },
+                ],
             });
-            
-            const newCategories = await prisma.habitCategory.findMany({
-                where: {
-                    userId: userId
-                }, select: {
+
+            categories = await prisma.habitCategory.findMany({
+                where: { userId },
+                select: {
                     title: true,
                     id: true,
-                }
+                },
             });
-            return Response.json(newCategories);
         }
 
-        return Response.json(categories);
+        return NextResponse.json(categories);
+
     } catch (error) {
-         console.error("Error fetching categories:", error);
-        return Response.json(
-            { error: "Error while fetching request" },
-            { status: 400 }
+        console.error("Error fetching categories:", error);
+
+        return NextResponse.json(
+            { error: "Failed to fetch categories" },
+            { status: 500 }
         );
     }
-
-
-
-
 }
