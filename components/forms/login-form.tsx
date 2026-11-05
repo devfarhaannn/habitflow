@@ -20,12 +20,14 @@ import { useAuth } from "@/hooks/useAuth"
 import { loginFormSchema } from "@/types/zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import * as z from "zod"
 
 export function LoginForm({ ...props }: React.ComponentProps<typeof Card>) {
     const { login, loading, error } = useAuth();
+    const router = useRouter();
     const form = useForm<z.infer<typeof loginFormSchema>>({
         resolver: zodResolver(loginFormSchema),
         defaultValues: {
@@ -34,25 +36,20 @@ export function LoginForm({ ...props }: React.ComponentProps<typeof Card>) {
         },
     })
 
+    async function handleGoogleLogin() {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        document.cookie = `habitflow-timezone=${encodeURIComponent(timezone)}; path=/; max-age=300; SameSite=Lax`;
+
+        await login("google", "", "");
+    }
+
     async function onSubmit(data: z.infer<typeof loginFormSchema>) {
-        toast("You submitted the following values:", {
-            description: (
-                <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4">
-                    <code>{JSON.stringify(data, null, 2)}</code>
-                </pre>
-            ),
-            classNames: {
-                content: "flex flex-col gap-2",
-            },
-            style: {
-                "--border-radius": "calc(var(--radius)  + 4px)",
-            } as React.CSSProperties,
-        })
 
         const result = await login("credentials", data.email, data.password);
 
-        if (!error && result) {
-            redirect("/dashboard");
+        if (result) {
+            router.push("/dashboard");
         }
     }
 
@@ -73,7 +70,7 @@ export function LoginForm({ ...props }: React.ComponentProps<typeof Card>) {
                     <form id="form-rhf-demo" onSubmit={form.handleSubmit(onSubmit)}>
                         <FieldGroup>
                             <Field>
-                                <Button variant="outline" type="button" onClick={() => login("google", "", "")}>
+                                <Button variant="outline" type="button" onClick={handleGoogleLogin}>
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                         <path
                                             d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"

@@ -4,6 +4,7 @@ import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import prisma from "./prisma";
 import bcrypt from "bcrypt";
+import { cookies } from "next/headers";
 
 export const NEXT_AUTH: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
@@ -49,6 +50,33 @@ export const NEXT_AUTH: NextAuthOptions = {
     ],
     secret: process.env.NEXTAUTH_SECRET,
     callbacks: {
+        signIn: async ({ user, account }) => {
+            if (account?.provider === "google" && user.id) {
+                const cookieStore = await cookies();
+                const timezoneCookie = cookieStore.get("habitflow-timezone");
+
+                if (timezoneCookie?.value) {
+                    try {
+                        const timezone = decodeURIComponent(timezoneCookie.value);
+
+                        new Intl.DateTimeFormat("en-US", {
+                            timeZone: timezone,
+                        });
+
+                        await prisma.user.update({
+                            where: { id: user.id },
+                            data: { timezone },
+                        });
+                    } catch {
+                        console.error("Invalid or unavailable browser timezone.");
+                    }
+
+                    cookieStore.delete("habitflow-timezone");
+                }
+            }
+
+            return true;
+        },
         jwt: async ({ token, user, trigger }: any) => {
             if (user) {
                 token.id = (user as any).id;
