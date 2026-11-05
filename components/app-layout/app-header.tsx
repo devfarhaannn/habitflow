@@ -60,20 +60,23 @@ export function AppHeader({ userId, timezone }: { userId: string, timezone: stri
     "create-habit": "Create Habit",
   }
 
- const breadcrumbs = segments.map((segment, index) => {
-  const href = "/" + segments.slice(0, index + 1).join("/");
+  const breadcrumbs = segments.map((segment, index) => {
+    const href =
+      segment === "habits" && index === 0 && segments.length > 1
+        ? "/habits?view=card"
+        : "/" + segments.slice(0, index + 1).join("/");
 
-  const isHabitId = segments[0] === "habits" && index === 1;
+    const isHabitId = segments[0] === "habits" && index === 1;
 
-  const label = isHabitId
-    ? habitTitle ?? "Habit Details"
-    : routeNames[segment] ??
+    const label = isHabitId
+      ? habitTitle ?? "Habit Details"
+      : routeNames[segment] ??
       segment
         .replace(/-/g, " ")
         .replace(/\b\w/g, (c) => c.toUpperCase());
 
-  return { href, label };
-});
+    return { href, label };
+  });
 
   const createSampleDataButtonClick = async () => {
     setLoading(true);

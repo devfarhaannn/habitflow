@@ -78,6 +78,7 @@ import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group"
 import { OctagonAlert, RefreshCcw, Undo } from "lucide-react"
 import { IconRenderer } from "../icon-picker/icon-picker"
 import Link from "next/link"
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth"
 import { HabitPageSchema } from "@/types/zod"
 import { ActionCell } from "./habit-action-cell"
@@ -292,6 +293,37 @@ export function DataTable1({
   // Original data ref
   const originalDataRef = React.useRef(initialData)
   const [completions, setCompletions] = React.useState<Record<string, number>>({})
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleViewChange = (value: string) => {
+    setActiveView(value);
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (value === "card") {
+      params.set("view", "card");
+    } else {
+      params.delete("view");
+    }
+
+    const query = params.toString();
+
+    router.replace(
+      query ? `${pathname}?${query}` : pathname,
+      { scroll: false }
+    );
+  };
+
+  const initialView =
+    searchParams.get("view") === "card" ? "card" : "table";
+
+  const [activeView, setActiveView] = React.useState(initialView);
+
+  React.useEffect(() => {
+    setActiveView(initialView);
+  }, [initialView]);
 
   React.useEffect(() => {
     setCompletions(
@@ -661,7 +693,8 @@ export function DataTable1({
 
   return (
     <Tabs
-      defaultValue="table"
+      value={activeView}
+      onValueChange={handleViewChange}
       className="w-full flex-col justify-start gap-6"
     >
 
