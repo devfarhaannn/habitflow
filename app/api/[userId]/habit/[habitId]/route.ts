@@ -7,6 +7,58 @@ import { NextRequest } from "next/server";
 type Params = Promise<{ userId: string, habitId: string }>;
 
 
+// Get a specific habit's title
+export async function GET(
+    req: NextRequest,
+    { params }: { params: Params }
+) {
+    try {
+        const { userId, habitId } = await params;
+        const session = await getServerSession(NEXT_AUTH);
+
+        if (!session?.user?.id) {
+            return Response.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        if (userId !== session.user.id) {
+            return Response.json(
+                { error: "Forbidden" },
+                { status: 403 }
+            );
+        }
+
+        const habit = await prisma.habit.findFirst({
+            where: {
+                id: habitId,
+                userId,
+            },
+            select: {
+                title: true,
+            },
+        });
+
+        if (!habit) {
+            return Response.json(
+                { error: "Habit not found" },
+                { status: 404 }
+            );
+        }
+
+        return Response.json({ title: habit.title });
+
+    } catch (error) {
+        console.error("Get habit title error:", error);
+
+        return Response.json(
+            { error: "Failed to fetch habit" },
+            { status: 500 }
+        );
+    }
+}
+
 // Update a habit details and habit daily stat if target count changes
 export async function PATCH(req: NextRequest, { params }: { params: Params }) {
     const { userId, habitId } = await params;

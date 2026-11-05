@@ -5,13 +5,54 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { usePathname } from "next/navigation"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "../ui/breadcrumb"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Spinner } from "../ui/spinner"
 
 export function AppHeader({ userId, timezone }: { userId: string, timezone: string }) {
   const pathname = usePathname()
   const [loading, setLoading] = useState(false);
-  const segments = pathname.split("/").filter(Boolean)
+  const segments = pathname.split("/").filter(Boolean);
+
+  const habitId =
+    segments[0] === "habits" && segments.length > 1
+      ? segments[1]
+      : null;
+
+  const [habitTitle, setHabitTitle] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!habitId) {
+      setHabitTitle(null);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function fetchHabitTitle() {
+      try {
+        const response = await fetch(
+          `/api/${userId}/habit/${habitId}`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok) {
+          setHabitTitle(null);
+          return;
+        }
+
+        const data = await response.json();
+        setHabitTitle(data.title);
+      } catch (error) {
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Failed to fetch habit title:", error);
+        }
+      }
+    }
+
+    fetchHabitTitle();
+
+    return () => controller.abort();
+  }, [habitId, userId]);
 
   const routeNames: Record<string, string> = {
     dashboard: "Dashboard",
@@ -19,21 +60,20 @@ export function AppHeader({ userId, timezone }: { userId: string, timezone: stri
     "create-habit": "Create Habit",
   }
 
-  const breadcrumbs = segments.map((segment, index) => {
-    const href = "/" + segments.slice(0, index + 1).join("/")
-    // const label = decodeURIComponent(segment)
-    const isHabitId =
-      segments[0] === "habits" &&
-      index === 1;
+ const breadcrumbs = segments.map((segment, index) => {
+  const href = "/" + segments.slice(0, index + 1).join("/");
 
-    const label = isHabitId
-      ? "Habit Details"
-      : routeNames[segment] ?? segment
+  const isHabitId = segments[0] === "habits" && index === 1;
+
+  const label = isHabitId
+    ? habitTitle ?? "Habit Details"
+    : routeNames[segment] ??
+      segment
         .replace(/-/g, " ")
         .replace(/\b\w/g, (c) => c.toUpperCase());
 
-    return { href, label }
-  })
+  return { href, label };
+});
 
   const createSampleDataButtonClick = async () => {
     setLoading(true);
