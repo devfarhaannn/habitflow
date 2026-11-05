@@ -407,11 +407,7 @@ export async function DELETE(
         console.error("Delete habit error:", error);
 
         return Response.json(
-            {
-                error: error instanceof Error
-                    ? error.message
-                    : "Unknown database error",
-            },
+            { error: "Failed to delete habit" },
             { status: 500 }
         );
     }
