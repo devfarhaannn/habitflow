@@ -42,8 +42,8 @@ export default function RootLayout({
           <SessionProvider>
             <ThemeProvider
               attribute="class"
-              defaultTheme="dark"
-              enableSystem={false}
+              defaultTheme="system"
+              enableSystem={true}
               disableTransitionOnChange={false}
               storageKey="habitflow-theme"
             >
