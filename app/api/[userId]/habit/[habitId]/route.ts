@@ -308,8 +308,18 @@ export async function PATCH(
         // 8. Update habit and daily stat together
         const timezone = session.user.timezone || "UTC";
 
-        const { todayStart, tomorrowStart } = getDateRanges(timezone);
+        try {
+            new Intl.DateTimeFormat("en-US", {
+                timeZone: timezone,
+            });
+        } catch {
+            return Response.json(
+                { error: "Invalid user timezone" },
+                { status: 400 }
+            );
+        }
 
+        const { todayStart, tomorrowStart } = getDateRanges(timezone);
         const updatedHabit = await prisma.$transaction(async (tx) => {
             const habit = await tx.habit.update({
                 where: {
