@@ -119,3 +119,74 @@ export async function DELETE(
         );
     }
 }
+
+export async function POST(
+    req: NextRequest,
+    { params }: { params: Params }
+) {
+    try {
+        const { userId, habitId } = await params;
+        const session = await getServerSession(NEXT_AUTH);
+
+        if (!session?.user?.id) {
+            return Response.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        if (userId !== session.user.id) {
+            return Response.json(
+                { error: "Forbidden" },
+                { status: 403 }
+            );
+        }
+
+        const habit = await prisma.habit.findFirst({
+            where: {
+                id: habitId,
+                userId,
+            },
+            select: {
+                id: true,
+                isFavorite: true,
+            },
+        });
+
+        if (!habit) {
+            return Response.json(
+                { error: "Habit not found" },
+                { status: 404 }
+            );
+        }
+
+        const updatedHabit = await prisma.habit.update({
+            where: {
+                id: habitId,
+                userId,
+            },
+            data: {
+                isFavorite: !habit.isFavorite,
+            },
+            select: {
+                isFavorite: true,
+            },
+        });
+
+        return Response.json({
+            success: true,
+            isFavorite: updatedHabit.isFavorite,
+            message: updatedHabit.isFavorite
+                ? "Habit added to favorites"
+                : "Habit removed from favorites",
+        });
+
+    } catch (error) {
+        console.error("Toggle favorite error:", error);
+
+        return Response.json(
+            { error: "Failed to update favorite status" },
+            { status: 500 }
+        );
+    }
+}

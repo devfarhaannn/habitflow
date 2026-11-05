@@ -100,6 +100,7 @@ model Habit {
   categoryId       String
   category         HabitCategory     @relation(fields: [categoryId], references: [id])
   status           HabitStatus       @default(ACTIVE)
+  isFavorite       Boolean           @default(false)
   archivedAt       DateTime?         @db.Timestamptz
   startDate        DateTime          @default(now()) @db.Timestamptz
   endDate          DateTime?         @db.Timestamptz

@@ -69,6 +69,7 @@ export const HabitPageSchema = z.object({
     icon: z.string(),
     goalType: z.enum(["DAILY", "WEEKLY", "MONTHLY"]),
     status: z.enum(["ACTIVE", "INACTIVE", "COMPLETED", "ARCHIVED"]),
+    isFavorite: z.boolean(),
     startDate: z.date(),
     endDate: z.date().nullable(),
     reminderEnabled: z.boolean(),

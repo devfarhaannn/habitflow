@@ -139,6 +139,39 @@ export function ActionCell({
             setCopying(false);
         }
     }
+    async function handleToggleFavorite() {
+        if (!user?.id) {
+            toast.error("Please login first");
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `/api/${user.id}/habit/${row.original.id}`,
+                {
+                    method: "POST",
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to update favorite");
+            }
+
+            toast.success(result.message);
+            router.refresh();
+
+        } catch (error) {
+            console.error("Favorite error:", error);
+
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Something went wrong"
+            );
+        }
+    }
 
     return (
         <>
@@ -168,8 +201,10 @@ export function ActionCell({
                         {copying ? "Copying..." : "Make a copy"}
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem>
-                        Favorite
+                    <DropdownMenuItem onSelect={handleToggleFavorite}>
+                        {row.original.isFavorite
+                            ? "Remove from favorites"
+                            : "Favorite"}
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />

@@ -30,6 +30,7 @@ export async function getHabitsData(userId: string, timezone: string): Promise<h
                 longestStreak: true,
                 totalCompletions: true,
                 status: true,
+                isFavorite: true,
                 startDate: true,
                 endDate: true,
                 reminderEnabled: true,
@@ -90,7 +91,6 @@ export async function getHabitsData(userId: string, timezone: string): Promise<h
 
     const result = habits.map(habit => {
         const allStats = statsByHabit.get(habit.id) || [];
-
         const currentWeekStats = allStats.filter(stat =>
             stat.date >= sevenDaysStart && stat.date < tomorrowStart
         )

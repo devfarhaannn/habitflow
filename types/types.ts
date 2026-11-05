@@ -181,6 +181,7 @@ export type habitBackendDTO = {
     icon: string;
     goalType: HabitFrequency;
     status: HabitStatus;
+    isFavorite: boolean;
     startDate: Date;
     endDate: Date | null;
     reminderEnabled: boolean;
