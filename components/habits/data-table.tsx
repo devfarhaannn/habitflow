@@ -467,24 +467,24 @@ export function DataTable1({
   const router = useRouter();
   const pathname = usePathname();
 
- const handleViewChange = (value: string) => {
+  const handleViewChange = (value: string) => {
     setActiveView(value);
 
     const params = new URLSearchParams(searchParams.toString());
 
     if (value === "table") {
-        params.delete("view");
+      params.delete("view");
     } else {
-        params.set("view", value);
+      params.set("view", value);
     }
 
     const query = params.toString();
 
     router.replace(
-        query ? `${pathname}?${query}` : pathname,
-        { scroll: false }
+      query ? `${pathname}?${query}` : pathname,
+      { scroll: false }
     );
-};
+  };
 
   const allowedViews = ["table", "heat-map", "card", "focus"];
 
@@ -508,23 +508,27 @@ export function DataTable1({
     )
   }, [data])
 
+
   const incrementCompletion = React.useCallback(
     (id: string, target: number) => {
-      setCompletions(prev => {
-        const current = prev[id] ?? 0;
-        const newValue = current + 1 > target ? 0 : current + 1;
+      const current =
+        completions[id] ??
+        data.find((habit) => habit.id === id)?.todaysCompletion ??
+        0;
 
-        return { ...prev, [id]: newValue }
-      })
+      const newValue =
+        current + 1 > target ? 0 : current + 1;
 
-      const current = completions[id] ?? 0
-      const newValue = current + 1 > target ? 0 : current + 1
+      setCompletions((prev) => ({
+        ...prev,
+        [id]: newValue
+      }));
 
-      sendCompletionToDB(id, newValue, current, target)
-
+      sendCompletionToDB(id, newValue, current, target);
     },
-    [sendCompletionToDB]
-  )
+    [completions, data, sendCompletionToDB]
+  );
+
 
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
