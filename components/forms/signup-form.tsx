@@ -24,9 +24,27 @@ import { toast } from "sonner"
 import * as z from "zod"
 import { Checkbox } from "../ui/checkbox"
 import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     const { register, login, loading, error } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!error) return;
+
+        const messages: Record<string, string> = {
+            USER_ALREADY_EXISTS: "This email is already registered.",
+            MISSING_FIELDS: "Please fill in all required fields.",
+            INVALID_CREDENTIALS: "Invalid credentials.",
+            USER_NOT_FOUND: "User not found.",
+            OAUTH_ACCOUNT_EXISTS: "This account is already linked to Google.",
+            UNKNOWN_ERROR: "Something went wrong. Please try again.",
+        };
+
+        toast.error(messages[error] ?? "Unable to create your account.");
+    }, [error]);
     const form = useForm<z.infer<typeof signupFormSchema>>({
         resolver: zodResolver(signupFormSchema),
         defaultValues: {
@@ -39,32 +57,28 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     })
 
     async function onSubmit(data: z.infer<typeof signupFormSchema>) {
+        try {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        toast("You submitted the following values:", {
-            description: (
-                <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4">
-                    <code>{JSON.stringify(data, null, 2)}</code>
-                </pre>
-            ),
-            classNames: {
-                content: "flex flex-col gap-2",
-            },
-            style: {
-                "--border-radius": "calc(var(--radius)  + 4px)",
-            } as React.CSSProperties,
-        })
+            const result = await register(
+                data.fullName,
+                data.email,
+                data.password,
+                timezone
+            );
 
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+            if (!result) {
+                return;
+            }
 
-        const result = await register(data.fullName, data.email, data.password, timezone);
+            toast.success("Account created successfully!", {
+                description: "Welcome to HabitFlow!",
+            });
 
-        if (!error && result) {
-            redirect("/dashboard");
+            router.push("/dashboard");
+        } catch {
+            toast.error("Something went wrong. Please try again.");
         }
-    }
-
-    if (error) {
-        toast.error(error);
     }
 
     return (
