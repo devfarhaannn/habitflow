@@ -15,6 +15,21 @@ import {
     AvatarImage,
 } from "@/components/ui/avatar";
 
+import { signOut } from "next-auth/react";
+import { Trash2, AlertTriangle } from "lucide-react";
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 export default function SettingsPage() {
     const { user, loading } = useAuth();
     const { update } = useSession();
@@ -27,6 +42,9 @@ export default function SettingsPage() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [changingPassword, setChangingPassword] = useState(false);
     const [showPasswords, setShowPasswords] = useState(false);
+
+    const [deleting, setDeleting] = useState(false);
+    const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
     useEffect(() => {
         if (user) {
@@ -117,6 +135,38 @@ export default function SettingsPage() {
             );
         } finally {
             setChangingPassword(false);
+        }
+    }
+    async function handleDeleteAccount() {
+        if (deleteConfirmation !== "DELETE") {
+            toast.error("Please type DELETE to confirm.");
+            return;
+        }
+
+        try {
+            setDeleting(true);
+
+            const response = await fetch("/api/profile/delete", {
+                method: "DELETE",
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to delete account.");
+            }
+
+            toast.success("Your account has been deleted.");
+
+            await signOut({ callbackUrl: "/" });
+        } catch (error) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Something went wrong."
+            );
+        } finally {
+            setDeleting(false);
         }
     }
 
@@ -271,6 +321,79 @@ export default function SettingsPage() {
                         <Lock className="mr-2 size-4" />
                         {changingPassword ? "Updating..." : "Change Password"}
                     </Button>
+                </CardContent>
+            </Card>
+            <Card className="border-destructive/50">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-destructive">
+                        <AlertTriangle className="size-5" />
+                        Danger Zone
+                    </CardTitle>
+                    <CardDescription>
+                        Permanently delete your HabitFlow account and all associated data.
+                    </CardDescription>
+                </CardHeader>
+
+                <CardContent>
+                    <AlertDialog
+                        onOpenChange={(open) => {
+                            if (!open) setDeleteConfirmation("");
+                        }}
+                    >
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive">
+                                <Trash2 className="mr-2 size-4" />
+                                Delete Account
+                            </Button>
+                        </AlertDialogTrigger>
+
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                    Are you absolutely sure?
+                                </AlertDialogTitle>
+
+                                <AlertDialogDescription>
+                                    This action cannot be undone. Your account, habits,
+                                    reminders, completion history, and associated data
+                                    will be permanently deleted.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">
+                                    Type DELETE to confirm
+                                </label>
+
+                                <Input
+                                    value={deleteConfirmation}
+                                    onChange={(e) =>
+                                        setDeleteConfirmation(e.target.value)
+                                    }
+                                    placeholder="Type DELETE"
+                                />
+                            </div>
+
+                            <AlertDialogFooter>
+                                <AlertDialogCancel disabled={deleting}>
+                                    Cancel
+                                </AlertDialogCancel>
+
+                                <AlertDialogAction
+                                    disabled={
+                                        deleting || deleteConfirmation !== "DELETE"
+                                    }
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleDeleteAccount();
+                                    }}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                    {deleting ? "Deleting..." : "Permanently Delete"}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </CardContent>
             </Card>
         </div>
