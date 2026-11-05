@@ -20,8 +20,14 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "../ui/calendar";
 import { Checkbox } from "../ui/checkbox";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+    DEFAULT_REMINDER_SETTINGS,
+    WEEKDAYS,
+    type ReminderSettings,
+    type HabitReminderResponse,
+} from "@/types/types";
 
 export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
     item: z.infer<typeof HabitPageSchema>,
@@ -33,6 +39,15 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
     const { user } = useAuth();
     const router = useRouter();
     const [saving, setSaving] = useState(false);
+    const [reminder, setReminder] = useState<ReminderSettings>(
+        DEFAULT_REMINDER_SETTINGS
+    );
+
+    const [reminderLoading, setReminderLoading] = useState(false);
+
+    const originalReminder = useRef<ReminderSettings>(
+        DEFAULT_REMINDER_SETTINGS
+    );
 
     const form = useForm<z.infer<typeof editHabitSchema>>({
         resolver: zodResolver(editHabitSchema),
@@ -66,6 +81,63 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
         }
     }, [item, open, form]);
 
+    useEffect(() => {
+        if (!open || !user?.id) return;
+
+        let cancelled = false;
+
+        const fetchReminder = async () => {
+            try {
+                setReminderLoading(true);
+
+                const response = await fetch(`/api/${user.id}/reminders`);
+
+                if (!response.ok) {
+                    throw new Error("Failed to load reminder settings.");
+                }
+
+                const reminders: HabitReminderResponse[] = await response.json();
+
+                const existing = reminders.find(
+                    (reminderItem) => reminderItem.habitId === item.id
+                );
+
+                const settings: ReminderSettings = existing
+                    ? {
+                        id: existing.id,
+                        enabled: existing.enabled,
+                        time: new Date(existing.time).toISOString().slice(11, 16),
+                        daysOfWeek: existing.daysOfWeek,
+                    }
+                    : DEFAULT_REMINDER_SETTINGS;
+
+                if (!cancelled) {
+                    setReminder(settings);
+                    originalReminder.current = settings;
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    toast.error(
+                        error instanceof Error
+                            ? error.message
+                            : "Failed to load reminder."
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setReminderLoading(false);
+                }
+            }
+        };
+
+        fetchReminder();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [open, user?.id, item.id]);
+
+
     async function onSubmit(values: z.infer<typeof editHabitSchema>) {
         const changedValues: Partial<z.infer<typeof editHabitSchema>> = {};
 
@@ -76,13 +148,8 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
             if (newValue === undefined) return;
 
             if (key === "endDate") {
-                const newDate = newValue
-                    ? new Date(newValue).getTime()
-                    : null;
-
-                const oldDate = oldValue
-                    ? new Date(oldValue).getTime()
-                    : null;
+                const newDate = newValue ? new Date(newValue).getTime() : null;
+                const oldDate = oldValue ? new Date(oldValue).getTime() : null;
 
                 if (newDate !== oldDate) {
                     (changedValues as Record<string, unknown>)[key] = newValue;
@@ -96,36 +163,137 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
             }
         });
 
-        if (Object.keys(changedValues).length === 0) {
+        const hasHabitChanges = Object.keys(changedValues).length > 0;
+
+        const initialReminder = originalReminder.current;
+
+        const hasReminderChanges =
+            reminder.enabled !== initialReminder.enabled ||
+            reminder.time !== initialReminder.time ||
+            [...reminder.daysOfWeek].sort().join(",") !==
+            [...initialReminder.daysOfWeek].sort().join(",");
+
+        if (!hasHabitChanges && !hasReminderChanges) {
             toast.info("Nothing changed.");
             onOpenChange(false);
+            return;
+        }
+
+        if (reminder.enabled && reminder.daysOfWeek.length === 0) {
+            toast.error("Please select at least one reminder day.");
             return;
         }
 
         try {
             setSaving(true);
 
-            const response = await fetch(
-                `/api/${user?.id}/habit/${item.id}`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        id: item.id,
-                        ...changedValues,
-                    }),
+            // 1. Update habit
+            if (hasHabitChanges) {
+                const habitResponse = await fetch(
+                    `/api/${user?.id}/habit/${item.id}`,
+                    {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            id: item.id,
+                            ...changedValues,
+                        }),
+                    }
+                );
+
+                const habitData = await habitResponse.json().catch(() => null);
+
+                if (!habitResponse.ok) {
+                    throw new Error(
+                        habitData?.error || "Failed to update habit."
+                    );
                 }
-            );
-
-            const data = await response.json().catch(() => null);
-
-            if (!response.ok) {
-                throw new Error(data?.error || "Failed to update habit.");
             }
 
-            toast.success("Habit updated successfully!");
+            // 2. Create or update reminder
+            if (hasReminderChanges && user?.id) {
+                // Existing reminder
+                if (reminder.id) {
+                    const reminderResponse = await fetch(
+                        `/api/${user.id}/reminders/${reminder.id}`,
+                        {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(
+                                reminder.enabled
+                                    ? {
+                                        time: reminder.time,
+                                        daysOfWeek: reminder.daysOfWeek,
+                                        enabled: true,
+                                    }
+                                    : {
+                                        enabled: false,
+                                    }
+                            ),
+                        }
+                    );
+
+                    const reminderData = await reminderResponse.json();
+
+                    if (!reminderResponse.ok) {
+                        throw new Error(
+                            reminderData?.error || "Failed to update reminder."
+                        );
+                    }
+
+                    const savedSettings: ReminderSettings = {
+                        id: reminderData.id,
+                        enabled: reminderData.enabled,
+                        time: new Date(reminderData.time).toISOString().slice(11, 16),
+                        daysOfWeek: reminderData.daysOfWeek,
+                    };
+
+                    setReminder(savedSettings);
+                    originalReminder.current = savedSettings;
+                }
+
+                // New reminder
+                else if (reminder.enabled) {
+                    const reminderResponse = await fetch(
+                        `/api/${user.id}/reminders`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                habitId: item.id,
+                                time: reminder.time,
+                                daysOfWeek: reminder.daysOfWeek,
+                            }),
+                        }
+                    );
+
+                    const reminderData = await reminderResponse.json();
+
+                    if (!reminderResponse.ok) {
+                        throw new Error(
+                            reminderData?.error || "Failed to create reminder."
+                        );
+                    }
+
+                    const savedSettings: ReminderSettings = {
+                        id: reminderData.id,
+                        enabled: reminderData.enabled,
+                        time: new Date(reminderData.time).toISOString().slice(11, 16),
+                        daysOfWeek: reminderData.daysOfWeek,
+                    };
+
+                    setReminder(savedSettings);
+                    originalReminder.current = savedSettings;
+                }
+            }
+
+            toast.success("Habit and reminder updated successfully!");
 
             onOpenChange(false);
             router.refresh();
@@ -142,6 +310,7 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
             setSaving(false);
         }
     }
+
 
     return (
         <Drawer
@@ -437,19 +606,84 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                 />
                             </div>
 
-                            <div className="flex flex-col gap-3">
-                                <FieldGroup className="w-56" onClick={() => toast("Reminder feature is unavailable")}>
-                                    <Field orientation="horizontal">
-                                        <Checkbox id="terms-checkbox-basic" name="terms-checkbox-basic"
-                                            disabled
-                                        />
-                                        <FieldLabel htmlFor="terms-checkbox-basic">
-                                            Enable Reminder
-                                        </FieldLabel>
-                                    </Field>
-                                </FieldGroup>
 
+                            <div className="space-y-4 rounded-lg border p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium">Habit Reminder</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Set a time and days for this habit.
+                                        </p>
+                                    </div>
+
+                                    <Checkbox
+                                        checked={reminder.enabled}
+                                        disabled={reminderLoading || saving}
+                                        onCheckedChange={(checked) =>
+                                            setReminder((prev) => ({
+                                                ...prev,
+                                                enabled: checked === true,
+                                            }))
+                                        }
+                                    />
+                                </div>
+
+                                {reminder.enabled && (
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">
+                                                Reminder Time
+                                            </label>
+
+                                            <Input
+                                                type="time"
+                                                value={reminder.time}
+                                                disabled={reminderLoading || saving}
+                                                onChange={(e) =>
+                                                    setReminder((prev) => ({
+                                                        ...prev,
+                                                        time: e.target.value,
+                                                    }))
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-medium">Repeat on</p>
+
+                                            <div className="flex flex-wrap gap-3">
+                                                {WEEKDAYS.map((day) => (
+                                                    <label
+                                                        key={day.value}
+                                                        className="flex items-center gap-2 text-sm"
+                                                    >
+                                                        <Checkbox
+                                                            checked={reminder.daysOfWeek.includes(day.value)}
+                                                            disabled={reminderLoading || saving}
+                                                            onCheckedChange={(checked) => {
+                                                                setReminder((prev) => {
+                                                                    const days = checked
+                                                                        ? [...prev.daysOfWeek, day.value]
+                                                                        : prev.daysOfWeek.filter(
+                                                                            (value) => value !== day.value
+                                                                        );
+
+                                                                    return {
+                                                                        ...prev,
+                                                                        daysOfWeek: days,
+                                                                    };
+                                                                });
+                                                            }}
+                                                        />
+                                                        {day.label}
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
+
 
                             <DrawerFooter className="gap-4">
                                 <Button type="submit" disabled={saving}>
