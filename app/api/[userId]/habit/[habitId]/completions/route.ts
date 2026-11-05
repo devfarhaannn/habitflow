@@ -42,10 +42,25 @@ export async function PATCH(
         }
 
         // 2. Validate request body
+
         let body: Record<string, unknown>;
 
         try {
-            body = await req.json();
+            const parsedBody: unknown = await req.json();
+
+            if (
+                typeof parsedBody !== "object" ||
+                parsedBody === null ||
+                Array.isArray(parsedBody)
+            ) {
+                return Response.json(
+                    { error: "Invalid request body" },
+                    { status: 400 }
+                );
+            }
+
+            body = parsedBody as Record<string, unknown>;
+
         } catch {
             return Response.json(
                 { error: "Invalid JSON body" },
@@ -68,6 +83,17 @@ export async function PATCH(
 
         // 3. Get the user's timezone and today's boundaries
         const timezone = session.user.timezone || "UTC";
+
+        try {
+            new Intl.DateTimeFormat("en-US", {
+                timeZone: timezone
+            });
+        } catch {
+            return Response.json(
+                { error: "Invalid user timezone" },
+                { status: 400 }
+            );
+        }
 
         const { todayStart, tomorrowStart } =
             getDateRanges(timezone);
