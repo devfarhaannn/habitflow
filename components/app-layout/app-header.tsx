@@ -22,9 +22,15 @@ export function AppHeader({ userId, timezone }: { userId: string, timezone: stri
   const breadcrumbs = segments.map((segment, index) => {
     const href = "/" + segments.slice(0, index + 1).join("/")
     // const label = decodeURIComponent(segment)
-    const label = routeNames[segment] ?? segment
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase())
+    const isHabitId =
+      segments[0] === "habits" &&
+      index === 1;
+
+    const label = isHabitId
+      ? "Habit Details"
+      : routeNames[segment] ?? segment
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
 
     return { href, label }
   })
