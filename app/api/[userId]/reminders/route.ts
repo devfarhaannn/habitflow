@@ -1,3 +1,4 @@
+
 import { NEXT_AUTH } from "@/lib/authOptions";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
@@ -5,33 +6,31 @@ import { NextRequest } from "next/server";
 
 type Params = Promise<{ userId: string }>;
 
-// GET: Fetch all reminders for the authenticated user
+// GET: Fetch all reminders
 export async function GET(
-    req: NextRequest,
+    _: NextRequest,
     { params }: { params: Params }
 ) {
-    const { userId } = await params;
-    const session = await getServerSession(NEXT_AUTH);
-
-    if (!session?.user?.id) {
-        return Response.json(
-            { error: "Unauthorized" },
-            { status: 401 }
-        );
-    }
-
-    if (userId !== session.user.id) {
-        return Response.json(
-            { error: "Forbidden" },
-            { status: 403 }
-        );
-    }
-
     try {
+        const { userId } = await params;
+        const session = await getServerSession(NEXT_AUTH);
+
+        if (!session?.user?.id) {
+            return Response.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        if (userId !== session.user.id) {
+            return Response.json(
+                { error: "Forbidden" },
+                { status: 403 }
+            );
+        }
+
         const reminders = await prisma.habitReminder.findMany({
-            where: {
-                userId,
-            },
+            where: { userId },
             include: {
                 habit: {
                     select: {
@@ -48,6 +47,7 @@ export async function GET(
         });
 
         return Response.json(reminders);
+
     } catch (error) {
         console.error("Error fetching reminders:", error);
 
@@ -63,31 +63,56 @@ export async function POST(
     req: NextRequest,
     { params }: { params: Params }
 ) {
-    const { userId } = await params;
-    const session = await getServerSession(NEXT_AUTH);
-
-    if (!session?.user?.id) {
-        return Response.json(
-            { error: "Unauthorized" },
-            { status: 401 }
-        );
-    }
-
-    if (userId !== session.user.id) {
-        return Response.json(
-            { error: "Forbidden" },
-            { status: 403 }
-        );
-    }
-
     try {
-        const body = await req.json();
+        const { userId } = await params;
+        const session = await getServerSession(NEXT_AUTH);
+
+        if (!session?.user?.id) {
+            return Response.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        if (userId !== session.user.id) {
+            return Response.json(
+                { error: "Forbidden" },
+                { status: 403 }
+            );
+        }
+
+        // Parse request body
+        let body: Record<string, unknown>;
+
+        try {
+            const parsedBody: unknown = await req.json();
+
+            if (
+                typeof parsedBody !== "object" ||
+                parsedBody === null ||
+                Array.isArray(parsedBody)
+            ) {
+                return Response.json(
+                    { error: "Invalid request body" },
+                    { status: 400 }
+                );
+            }
+
+            body = parsedBody as Record<string, unknown>;
+
+        } catch {
+            return Response.json(
+                { error: "Invalid JSON body" },
+                { status: 400 }
+            );
+        }
 
         const { habitId, time, daysOfWeek } = body;
 
         // Validate required fields
         if (
             typeof habitId !== "string" ||
+            !habitId.trim() ||
             typeof time !== "string" ||
             !Array.isArray(daysOfWeek)
         ) {
@@ -97,7 +122,7 @@ export async function POST(
             );
         }
 
-        // Validate time format (24-hour HH:mm)
+        // Validate time format
         if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
             return Response.json(
                 { error: "Invalid time format. Use HH:mm" },
@@ -110,24 +135,30 @@ export async function POST(
             daysOfWeek.length > 0 &&
             daysOfWeek.every(
                 (day: unknown) =>
-                    Number.isInteger(day) &&
                     typeof day === "number" &&
+                    Number.isInteger(day) &&
                     day >= 0 &&
                     day <= 6
             );
 
-        if (!validDays || new Set(daysOfWeek).size !== daysOfWeek.length) {
+        if (
+            !validDays ||
+            new Set(daysOfWeek).size !== daysOfWeek.length
+        ) {
             return Response.json(
                 { error: "Select valid reminder days" },
                 { status: 400 }
             );
         }
 
-        // Verify that this habit belongs to the logged-in user
+        // Verify habit ownership
         const habit = await prisma.habit.findFirst({
             where: {
                 id: habitId,
                 userId,
+            },
+            select: {
+                id: true,
             },
         });
 
@@ -138,8 +169,7 @@ export async function POST(
             );
         }
 
-        // Store time as a UTC time-of-day value.
-        // The date portion is only an anchor; it is not a reminder date.
+        // Store time as UTC time-of-day
         const reminderTime = new Date(
             `1970-01-01T${time}:00.000Z`
         );
@@ -165,6 +195,7 @@ export async function POST(
         });
 
         return Response.json(reminder, { status: 201 });
+
     } catch (error) {
         console.error("Error creating reminder:", error);
 
