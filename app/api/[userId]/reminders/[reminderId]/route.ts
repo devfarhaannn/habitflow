@@ -1,3 +1,4 @@
+
 import { NEXT_AUTH } from "@/lib/authOptions";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
@@ -8,31 +9,57 @@ type Params = Promise<{
     reminderId: string;
 }>;
 
-// PATCH: Update reminder or enable/disable it
+// PATCH: Update reminder
 export async function PATCH(
     req: NextRequest,
     { params }: { params: Params }
 ) {
-    const { userId, reminderId } = await params;
-    const session = await getServerSession(NEXT_AUTH);
-
-    if (!session?.user?.id) {
-        return Response.json(
-            { error: "Unauthorized" },
-            { status: 401 }
-        );
-    }
-
-    if (userId !== session.user.id) {
-        return Response.json(
-            { error: "Forbidden" },
-            { status: 403 }
-        );
-    }
-
     try {
-        const body = await req.json();
+        const { userId, reminderId } = await params;
+        const session = await getServerSession(NEXT_AUTH);
 
+        // 1. Authentication
+        if (!session?.user?.id) {
+            return Response.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        // 2. Authorization
+        if (userId !== session.user.id) {
+            return Response.json(
+                { error: "Forbidden" },
+                { status: 403 }
+            );
+        }
+
+        // 3. Parse request body
+        let body: Record<string, unknown>;
+
+        try {
+            const parsedBody: unknown = await req.json();
+
+            if (
+                typeof parsedBody !== "object" ||
+                parsedBody === null ||
+                Array.isArray(parsedBody)
+            ) {
+                return Response.json(
+                    { error: "Invalid request body" },
+                    { status: 400 }
+                );
+            }
+
+            body = parsedBody as Record<string, unknown>;
+        } catch {
+            return Response.json(
+                { error: "Invalid JSON body" },
+                { status: 400 }
+            );
+        }
+
+        // 4. Verify reminder ownership
         const existingReminder = await prisma.habitReminder.findFirst({
             where: {
                 id: reminderId,
@@ -47,12 +74,14 @@ export async function PATCH(
             );
         }
 
+        // 5. Prepare update data
         const updateData: {
             time?: Date;
             daysOfWeek?: number[];
             enabled?: boolean;
         } = {};
 
+        // 6. Validate time
         if (body.time !== undefined) {
             if (
                 typeof body.time !== "string" ||
@@ -69,21 +98,21 @@ export async function PATCH(
             );
         }
 
+        // 7. Validate weekdays
         if (body.daysOfWeek !== undefined) {
-            const validDays =
-                Array.isArray(body.daysOfWeek) &&
-                body.daysOfWeek.length > 0 &&
-                body.daysOfWeek.every(
+            const days = body.daysOfWeek;
+
+            if (
+                !Array.isArray(days) ||
+                days.length === 0 ||
+                !days.every(
                     (day: unknown) =>
                         typeof day === "number" &&
                         Number.isInteger(day) &&
                         day >= 0 &&
                         day <= 6
-                );
-
-            if (
-                !validDays ||
-                new Set(body.daysOfWeek).size !== body.daysOfWeek.length
+                ) ||
+                new Set(days).size !== days.length
             ) {
                 return Response.json(
                     { error: "Invalid reminder days" },
@@ -91,9 +120,10 @@ export async function PATCH(
                 );
             }
 
-            updateData.daysOfWeek = body.daysOfWeek;
+            updateData.daysOfWeek = days as number[];
         }
 
+        // 8. Validate enabled status
         if (body.enabled !== undefined) {
             if (typeof body.enabled !== "boolean") {
                 return Response.json(
@@ -105,6 +135,7 @@ export async function PATCH(
             updateData.enabled = body.enabled;
         }
 
+        // 9. Check whether anything needs updating
         if (Object.keys(updateData).length === 0) {
             return Response.json(
                 { error: "No valid fields provided" },
@@ -112,6 +143,7 @@ export async function PATCH(
             );
         }
 
+        // 10. Update reminder
         const reminder = await prisma.habitReminder.update({
             where: {
                 id: reminderId,
@@ -129,7 +161,11 @@ export async function PATCH(
             },
         });
 
-        return Response.json(reminder);
+        return Response.json({
+            success: true,
+            reminder,
+        });
+
     } catch (error) {
         console.error("Error updating reminder:", error);
 
@@ -142,31 +178,37 @@ export async function PATCH(
 
 // DELETE: Delete a reminder
 export async function DELETE(
-    req: NextRequest,
+    _: NextRequest,
     { params }: { params: Params }
 ) {
-    const { userId, reminderId } = await params;
-    const session = await getServerSession(NEXT_AUTH);
-
-    if (!session?.user?.id) {
-        return Response.json(
-            { error: "Unauthorized" },
-            { status: 401 }
-        );
-    }
-
-    if (userId !== session.user.id) {
-        return Response.json(
-            { error: "Forbidden" },
-            { status: 403 }
-        );
-    }
-
     try {
+        const { userId, reminderId } = await params;
+        const session = await getServerSession(NEXT_AUTH);
+
+        // 1. Authentication
+        if (!session?.user?.id) {
+            return Response.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        // 2. Authorization
+        if (userId !== session.user.id) {
+            return Response.json(
+                { error: "Forbidden" },
+                { status: 403 }
+            );
+        }
+
+        // 3. Verify reminder ownership
         const existingReminder = await prisma.habitReminder.findFirst({
             where: {
                 id: reminderId,
                 userId,
+            },
+            select: {
+                id: true,
             },
         });
 
@@ -177,6 +219,7 @@ export async function DELETE(
             );
         }
 
+        // 4. Delete reminder
         await prisma.habitReminder.delete({
             where: {
                 id: reminderId,
@@ -187,6 +230,7 @@ export async function DELETE(
             success: true,
             message: "Reminder deleted successfully",
         });
+
     } catch (error) {
         console.error("Error deleting reminder:", error);
 
