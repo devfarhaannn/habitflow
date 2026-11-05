@@ -37,6 +37,7 @@ export function ActionCell({
     const [open, setOpen] = React.useState(false);
     const [deleteOpen, setDeleteOpen] = React.useState(false);
     const [deleting, setDeleting] = React.useState(false);
+    const [copying, setCopying] = React.useState(false);
 
     const router = useRouter();
     const { user } = useAuth();
@@ -91,6 +92,54 @@ export function ActionCell({
         }
     }
 
+    async function handleCopyHabit() {
+        if (!user?.id) {
+            toast.error("Please login to copy this habit");
+            return;
+        }
+
+        try {
+            setCopying(true);
+
+            const response = await fetch(`/api/${user.id}/habit`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    title: `Copy of ${row.original.title}`,
+                    description: row.original.description,
+                    icon: row.original.icon,
+                    color: row.original.color,
+                    goal: row.original.goalType,
+                    target: row.original.targetPerDay,
+                    categoryId: row.original.categoryId,
+                    startDate: new Date().toISOString(),
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to copy habit");
+            }
+
+            toast.success("Habit copied successfully");
+            router.refresh();
+
+        } catch (error) {
+            console.error("Copy habit error:", error);
+
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Something went wrong"
+            );
+        } finally {
+            setCopying(false);
+        }
+    }
+
     return (
         <>
             <DropdownMenu>
@@ -112,8 +161,11 @@ export function ActionCell({
                         Edit
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem>
-                        Make a copy
+                    <DropdownMenuItem
+                        onSelect={() => handleCopyHabit()}
+                        disabled={copying}
+                    >
+                        {copying ? "Copying..." : "Make a copy"}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem>
