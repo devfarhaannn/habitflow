@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { User, Save, Globe, Palette, ShieldCheck } from "lucide-react";
+import { User, Save, Globe, Palette, Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,12 @@ export default function SettingsPage() {
 
     const [name, setName] = useState(user?.name ?? "");
     const [timezone, setTimezone] = useState(user?.timezone ?? "UTC");
+
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [changingPassword, setChangingPassword] = useState(false);
+    const [showPasswords, setShowPasswords] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -56,6 +62,56 @@ export default function SettingsPage() {
             );
         } finally {
             setSaving(false);
+        }
+    }
+
+    async function handleChangePassword() {
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            toast.error("Please fill in all password fields.");
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            toast.error("New password must be at least 8 characters.");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            toast.error("New passwords do not match.");
+            return;
+        }
+
+        try {
+            setChangingPassword(true);
+
+            const response = await fetch("/api/profile/password", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    currentPassword,
+                    newPassword,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to change password.");
+            }
+
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+
+            toast.success("Password changed successfully!");
+        } catch (error) {
+            toast.error(
+                error instanceof Error ? error.message : "Something went wrong."
+            );
+        } finally {
+            setChangingPassword(false);
         }
     }
 
@@ -135,11 +191,63 @@ export default function SettingsPage() {
                     <CardTitle className="flex items-center gap-2">
                         <ShieldCheck className="size-5" /> Account Security
                     </CardTitle>
+                    <CardDescription>
+                        Update your password to keep your account secure.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                        Your account is authenticated using your configured login provider.
-                    </p>
+
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Current password</label>
+                        <Input
+                            type={showPasswords ? "text" : "password"}
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder="Enter current password"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">New password</label>
+                        <Input
+                            type={showPasswords ? "text" : "password"}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Enter new password"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Confirm new password</label>
+                        <Input
+                            type={showPasswords ? "text" : "password"}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm new password"
+                        />
+                    </div>
+
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowPasswords((prev) => !prev)}
+                    >
+                        {showPasswords ? (
+                            <EyeOff className="mr-2 size-4" />
+                        ) : (
+                            <Eye className="mr-2 size-4" />
+                        )}
+                        {showPasswords ? "Hide passwords" : "Show passwords"}
+                    </Button>
+
+                    <Button
+                        onClick={handleChangePassword}
+                        disabled={changingPassword}
+                    >
+                        <Lock className="mr-2 size-4" />
+                        {changingPassword ? "Updating..." : "Change Password"}
+                    </Button>
                 </CardContent>
             </Card>
         </div>
