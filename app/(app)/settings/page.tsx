@@ -9,6 +9,11 @@ import { User, Save, Globe, Palette, Lock, Eye, EyeOff, ShieldCheck } from "luci
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+    Avatar,
+    AvatarFallback,
+    AvatarImage,
+} from "@/components/ui/avatar";
 
 export default function SettingsPage() {
     const { user, loading } = useAuth();
@@ -135,6 +140,24 @@ export default function SettingsPage() {
                 </CardHeader>
 
                 <CardContent className="space-y-4">
+                    <div className="flex items-center gap-4">
+                        <Avatar className="size-20">
+                            <AvatarImage
+                                src={user?.image ?? ""}
+                                alt={user?.name ?? "Profile"}
+                            />
+                            <AvatarFallback className="text-xl font-semibold">
+                                {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+                            </AvatarFallback>
+                        </Avatar>
+
+                        <div>
+                            <p className="font-medium">{user?.name ?? "User"}</p>
+                            <p className="text-sm text-muted-foreground">
+                                Your profile picture
+                            </p>
+                        </div>
+                    </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Full name</label>
                         <Input value={name} onChange={(e) => setName(e.target.value)} />
