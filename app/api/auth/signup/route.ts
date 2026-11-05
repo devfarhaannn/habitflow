@@ -30,11 +30,15 @@ export async function POST(req: Request) {
             timezone: timezone,
             email,
             passwordHash,
-            habitCategories:{
-                create:[
-                    {title:"Health"},
-                    {title:"Fitness"},
-                    {title:"Productivity"},
+
+            // New users must complete onboarding
+            onboardingCompleted: false,
+
+            habitCategories: {
+                create: [
+                    { title: "Health" },
+                    { title: "Fitness" },
+                    { title: "Productivity" },
                 ]
             }
         },

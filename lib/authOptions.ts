@@ -56,6 +56,21 @@ export const NEXT_AUTH: NextAuthOptions = {
                 token.email = user.email;
                 token.timezone = user.timezone
             }
+            if (token.id) {
+                const userId = token.id;
+
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: userId },
+                    select: {
+                        onboardingCompleted: true,
+                    },
+                });
+
+                if (dbUser) {
+                    token.onboardingCompleted =
+                        dbUser.onboardingCompleted;
+                }
+            }
             return token;
         },
         session: async ({ session, token }: any) => {
@@ -64,6 +79,8 @@ export const NEXT_AUTH: NextAuthOptions = {
                 session.user.name = token.name;
                 session.user.email = token.email;
                 session.user.timezone = token.timezone as string
+                session.user.onboardingCompleted =
+                token.onboardingCompleted;
             }
             return session;
         }
