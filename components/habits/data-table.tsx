@@ -153,6 +153,134 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof HabitPageSchema>> }) {
   )
 }
 
+
+function HabitHeatMap({
+  habits,
+}: {
+  habits: z.infer<typeof HabitPageSchema>[];
+}) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Display the last 12 weeks
+  const startDate = new Date(today);
+  startDate.setDate(today.getDate() - today.getDay() - 11 * 7);
+
+  const weeks = Array.from({ length: 12 }, (_, weekIndex) =>
+    Array.from({ length: 7 }, (_, dayIndex) => {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + weekIndex * 7 + dayIndex);
+      return date;
+    })
+  );
+
+  const getDateKey = (date: Date) => date.toISOString().slice(0, 10);
+
+  const getIntensity = (completed: number, target: number) => {
+    if (completed <= 0) return 0;
+
+    const ratio = target > 0 ? completed / target : 0;
+
+    if (ratio >= 1) return 4;
+    if (ratio >= 0.75) return 3;
+    if (ratio >= 0.5) return 2;
+
+    return 1;
+  };
+
+  const intensityColors = [
+    "bg-muted",
+    "bg-emerald-200 dark:bg-emerald-950",
+    "bg-emerald-300 dark:bg-emerald-800",
+    "bg-emerald-400 dark:bg-emerald-600",
+    "bg-emerald-600 dark:bg-emerald-400",
+  ];
+
+  if (habits.length === 0) {
+    return (
+      <div className="rounded-lg border p-10 text-center text-muted-foreground">
+        No habits available. Create a habit to see your activity.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      {habits.map((habit) => {
+        const completionMap = new Map(
+          habit.heatmap.map((entry) => [
+            getDateKey(new Date(entry.date)),
+            entry,
+          ])
+        );
+
+        return (
+          <div key={habit.id} className="rounded-xl border p-4 space-y-4">
+            <div className="flex items-center gap-2">
+              <IconRenderer
+                icon={habit.icon}
+                style={{ color: habit.color }}
+              />
+
+              <span className="font-medium">{habit.title}</span>
+
+              <Badge variant="outline" className="ml-auto">
+                {habit.currentStreak} day streak
+              </Badge>
+            </div>
+
+            <div className="overflow-x-auto pb-2">
+              <div className="flex min-w-fit gap-1.5">
+                {weeks.map((week, weekIndex) => (
+                  <div key={weekIndex} className="flex flex-col gap-1">
+                    {week.map((date) => {
+                      const key = getDateKey(date);
+                      const entry = completionMap.get(key);
+
+                      const completed = entry?.completionCount ?? 0;
+                      const target = entry?.targetCount ?? habit.targetPerDay;
+
+                      const isFuture = date > today;
+                      const intensity = getIntensity(completed, target);
+
+                      return (
+                        <div
+                          key={key}
+                          title={`${date.toLocaleDateString()}: ${completed}/${target} completed`}
+                          className={`size-3.5 rounded-[3px] ${isFuture
+                            ? "bg-transparent"
+                            : intensityColors[intensity]
+                            }`}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Last 12 weeks</span>
+
+              <div className="flex items-center gap-1.5">
+                <span>Less</span>
+                {intensityColors.map((color, index) => (
+                  <div
+                    key={index}
+                    className={`size-3 rounded-sm ${color}`}
+                  />
+                ))}
+                <span>More</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
 export function DataTable1({
   data: initialData,
   userId
@@ -419,6 +547,15 @@ export function DataTable1({
 
   // Filter column for type
   const typeColumn = table.getColumn("category");
+  const selectedCategory = typeColumn?.getFilterValue() as string | undefined;
+
+  const filteredHabits = React.useMemo(() => {
+    if (!selectedCategory) return data;
+
+    return data.filter(
+      (habit) => habit.category?.title === selectedCategory
+    );
+  }, [data, selectedCategory]);
   const uniqueTypes = React.useMemo(() => {
     if (!typeColumn) return []
     return Array.from(typeColumn.getFacetedUniqueValues().keys())
@@ -815,31 +952,147 @@ export function DataTable1({
         </div> */}
       </TabsContent>
 
-      <TabsContent value="heat-map"
-        className="flex flex-col px-4 lg:px-6"
+      <TabsContent
+        value="heat-map"
+        className="flex flex-col gap-4 px-4 lg:px-6"
       >
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed">
-          <div className="flex w-full h-full items-center justify-center">
-            <div className="flex flex-col item-center justify-center gap-4">
-              <OctagonAlert className="mx-auto" size={40} />
-              <span className="text-xl">This view is currently not available</span>
-            </div>
-          </div>
-        </div>
+        <HabitHeatMap habits={filteredHabits} />
       </TabsContent>
 
-      <TabsContent value="card"
-        className="flex flex-col px-4 lg:px-6"
+
+      <TabsContent
+        value="card"
+        className="flex flex-col gap-4 px-4 lg:px-6"
       >
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed">
-          <div className="flex w-full h-full items-center justify-center">
-            <div className="flex flex-col item-center justify-center gap-4">
-              <OctagonAlert className="mx-auto" size={40} />
-              <span className="text-xl">This view is currently not available</span>
-            </div>
+        {filteredHabits.length === 0 ? (
+          <div className="rounded-lg border p-10 text-center text-muted-foreground">
+            No habits found in this category.
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredHabits.map((habit) => {
+              const completed = completions[habit.id] ?? habit.todaysCompletion;
+              const target = habit.targetPerDay;
+              const progress = target > 0
+                ? Math.min((completed / target) * 100, 100)
+                : 0;
+
+              return (
+                <div
+                  key={habit.id}
+                  className="flex flex-col gap-4 rounded-xl border bg-card p-5 transition-shadow hover:shadow-md"
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex size-11 shrink-0 items-center justify-center rounded-xl"
+                        style={{ backgroundColor: `${habit.color}20` }}
+                      >
+                        <IconRenderer
+                          icon={habit.icon}
+                          className="size-6"
+                          style={{ color: habit.color }}
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <h3 className="truncate font-semibold">
+                          {habit.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {habit.category?.title ?? "Uncategorized"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Badge variant="outline">
+                      {habit.status}
+                    </Badge>
+                  </div>
+
+                  {/* Progress */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Today's progress
+                      </span>
+                      <span className="font-medium">
+                        {completed}/{target}
+                      </span>
+                    </div>
+
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${progress}%`,
+                          backgroundColor: habit.color,
+                        }}
+                      />
+                    </div>
+
+                    <p className="text-right text-xs text-muted-foreground">
+                      {Math.round(progress)}% completed
+                    </p>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted/50 p-3">
+                    <div className="text-center">
+                      <p className="text-lg font-semibold">
+                        {habit.currentStreak}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Streak
+                      </p>
+                    </div>
+
+                    <div className="text-center">
+                      <p className="text-lg font-semibold">
+                        {habit.longestStreak}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Best
+                      </p>
+                    </div>
+
+                    <div className="text-center">
+                      <p className="text-lg font-semibold">
+                        {habit.totalCompletions}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Total
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <CompletionButton
+                        completionCount={completed}
+                        targetPerDay={target}
+                        color={habit.color}
+                        onIncrement={() =>
+                          incrementCompletion(habit.id, target)
+                        }
+                      />
+                    </div>
+
+                    <Button variant="outline" asChild>
+                      <Link href={`/habits/${habit.id}`}>
+                        View Details
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </TabsContent>
+
 
       <TabsContent value="focus"
         className="flex flex-col px-4 lg:px-6"
