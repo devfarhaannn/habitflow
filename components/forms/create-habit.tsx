@@ -32,6 +32,8 @@ import { ColorPickerDialog } from '../color-picker/color-dailog'
 import LoadingPage from '@/app/loading'
 import { useAuth } from '@/hooks/useAuth'
 import { CreateHabitformSchema } from '@/types/zod'
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 
 type Props = {
@@ -45,6 +47,7 @@ export function CreateHabitDailog({ defaultOpen = false, className }: Props) {
     const [open, setOpen] = useState(defaultOpen);
     const { user, loading } = useAuth();
     const [categories, setCategories] = useState<{ id: string; title: string }[]>([]);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -80,23 +83,43 @@ export function CreateHabitDailog({ defaultOpen = false, className }: Props) {
         }
     }, [categories]);
 
-    function onSubmit(values: z.infer<typeof CreateHabitformSchema>) {
-        const createHabit = async () => {
-            try {
-                const res = await fetch(`/api/${user?.id}/habit`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json; charset=UTF-8",
-                    },
-                    body: JSON.stringify(values)
-                });
-            } catch (error) {
-                console.error(error);
-            }
-        };
+    async function onSubmit(values: z.infer<typeof CreateHabitformSchema>) {
+        if (!user?.id) {
+            toast.error("Please login to create a habit");
+            return;
+        }
 
-        createHabit();
-        setOpen(false);
+        try {
+            const res = await fetch(`/api/${user.id}/habit`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(values),
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                throw new Error(result.error || "Failed to create habit");
+            }
+
+            toast.success("Habit created successfully");
+
+            form.reset();
+            setOpen(false);
+
+            router.refresh();
+
+        } catch (error) {
+            console.error("Create habit error:", error);
+
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Something went wrong"
+            );
+        }
     }
 
     return (
@@ -356,7 +379,13 @@ export function CreateHabitDailog({ defaultOpen = false, className }: Props) {
                                         Cancel
                                     </Button>
                                 </DialogClose>
-                                <Button size='lg' type='submit'>Create</Button>
+                                <Button
+                                    size="lg"
+                                    type="submit"
+                                    disabled={form.formState.isSubmitting}
+                                >
+                                    {form.formState.isSubmitting ? "Creating..." : "Create"}
+                                </Button>
                             </div>
                         </DialogFooter>
 
