@@ -49,13 +49,29 @@ export const NEXT_AUTH: NextAuthOptions = {
     ],
     secret: process.env.NEXTAUTH_SECRET,
     callbacks: {
-        jwt: async ({ token, user }: any) => {
+        jwt: async ({ token, user, trigger }: any) => {
             if (user) {
                 token.id = (user as any).id;
                 token.name = user.name;
                 token.email = user.email;
-                token.timezone = user.timezone
+                token.timezone = user.timezone;
             }
+
+            if (trigger === "update" && token.id) {
+                const updatedUser = await prisma.user.findUnique({
+                    where: { id: token.id },
+                    select: {
+                        name: true,
+                        timezone: true,
+                    },
+                });
+
+                if (updatedUser) {
+                    token.name = updatedUser.name;
+                    token.timezone = updatedUser.timezone;
+                }
+            }
+
             return token;
         },
         session: async ({ session, token }: any) => {

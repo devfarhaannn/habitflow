@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { User, Save, Globe, Palette, ShieldCheck } from "lucide-react";
 
@@ -11,9 +12,52 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 
 export default function SettingsPage() {
     const { user, loading } = useAuth();
+    const { update } = useSession();
 
     const [name, setName] = useState(user?.name ?? "");
     const [timezone, setTimezone] = useState(user?.timezone ?? "UTC");
+
+    useEffect(() => {
+        if (user) {
+            setName(user.name ?? "");
+            setTimezone(user.timezone ?? "UTC");
+        }
+    }, [user]);
+
+    const [saving, setSaving] = useState(false);
+
+    async function handleSaveProfile() {
+        try {
+            setSaving(true);
+
+            const response = await fetch("/api/profile", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ name, timezone }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to update profile");
+            }
+
+            await update();
+
+            setName(data.user.name);
+            setTimezone(data.user.timezone);
+
+            toast.success("Profile updated successfully!");
+        } catch (error) {
+            toast.error(
+                error instanceof Error ? error.message : "Something went wrong"
+            );
+        } finally {
+            setSaving(false);
+        }
+    }
 
     if (loading) return <div className="p-6">Loading settings...</div>;
 
@@ -45,9 +89,9 @@ export default function SettingsPage() {
                         <Input value={user?.email ?? ""} disabled />
                     </div>
 
-                    <Button disabled>
+                    <Button onClick={handleSaveProfile} disabled={saving}>
                         <Save className="mr-2 size-4" />
-                        Profile editing requires a profile update API
+                        {saving ? "Saving..." : "Save Changes"}
                     </Button>
                 </CardContent>
             </Card>
@@ -69,11 +113,6 @@ export default function SettingsPage() {
                     <p className="text-xs text-muted-foreground">
                         Example: Asia/Kolkata, America/New_York, Europe/London.
                     </p>
-                    <Button
-                        onClick={() => toast.info("Timezone update API is not implemented yet.")}
-                    >
-                        Save timezone
-                    </Button>
                 </CardContent>
             </Card>
 
