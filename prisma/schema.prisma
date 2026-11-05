@@ -63,24 +63,25 @@ model VerificationToken {
 }
 
 model User {
-  id              String            @id @default(uuid())
-  name            String?
-  email           String            @unique
-  emailVerified   DateTime?
-  firstName       String?
-  lastName        String?
-  passwordHash    String?
-  image           String?
-  timezone        String            @default("UTC")
-  createdAt       DateTime          @default(now()) @db.Timestamptz
-  updatedAt       DateTime          @updatedAt @db.Timestamptz
-  habits          Habit[]
-  habitChecks     HabitCompletion[]
-  habitDailyStats HabitDailyStat[]
-  habitReminders  HabitReminder[]
-  accounts        Account[]
-  sessions        Session[]
-  habitCategories HabitCategory[]
+  id                  String            @id @default(uuid())
+  name                String?
+  email               String            @unique
+  emailVerified       DateTime?
+  firstName           String?
+  lastName            String?
+  passwordHash        String?
+  image               String?
+  timezone            String            @default("UTC")
+  onboardingCompleted Boolean           @default(false)
+  createdAt           DateTime          @default(now()) @db.Timestamptz
+  updatedAt           DateTime          @updatedAt @db.Timestamptz
+  habits              Habit[]
+  habitChecks         HabitCompletion[]
+  habitDailyStats     HabitDailyStat[]
+  habitReminders      HabitReminder[]
+  accounts            Account[]
+  sessions            Session[]
+  habitCategories     HabitCategory[]
 
   @@map("users")
 }
