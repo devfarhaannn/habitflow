@@ -1,151 +1,177 @@
-## Habitflow
+# HabitFlow
 
-**Habitflow** is a modern, full‑stack habit tracking app designed to help you build better habits, one day at a time. It provides a focused dashboard, rich analytics, and a clean UI so you can see your progress, stay accountable, and tweak your routines quickly.
-
----
+HabitFlow is a full-stack habit tracking application designed to help people create routines, track daily progress, and build consistency over time. It includes habit management, completion tracking, streaks, calendar views, reminders, analytics, and account settings.
 
 ## Features
 
-- **Dashboard overview**
-  - See your key habits, current streaks, longest streaks, and total completions at a glance.
-  - Time‑zone–aware stats so “today” always matches your local day.
+- **Authentication** — Sign up and sign in with email/password or Google.
+- **Habit management** — Create, edit, organize, favorite, reorder, and delete habits.
+- **Categories** — Organize habits with categories, icons, and colors.
+- **Progress tracking** — Record habit completions and monitor streaks and daily statistics.
+- **Dashboard and analytics** — Review habit activity and progress through dashboard and report views.
+- **Calendar** — View habit activity by date with timezone-aware date handling.
+- **Reminders** — Configure reminder times and weekdays for habits.
+- **Data management** — Export and restore account data.
+- **Settings** — Manage profile, password, and timezone settings.
+- **Responsive interface** — Built with Next.js, Tailwind CSS, and shadcn/ui components.
 
-- **Habit management**
-  - Create, organize, and categorize habits (e.g. Health, Learning, Productivity).
-  - Color‑coded habits with icons for quick visual scanning.
+## Tech stack
 
-- **Daily tracking & streaks**
-  - Track completions day by day with streaks and completion counts.
-  - Deterministic sample dataset for quick demos and testing.
+| Area | Technologies |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| UI | React 19, Tailwind CSS 4, shadcn/ui, Radix UI |
+| Icons and charts | Lucide React, Recharts |
+| Forms and validation | React Hook Form, Zod |
+| Authentication | NextAuth.js, Google OAuth, Credentials provider |
+| Database | PostgreSQL |
+| ORM | Prisma 7 with the PostgreSQL driver adapter (`@prisma/adapter-pg`) |
+| Date and timezone handling | date-fns, date-fns-tz |
+| Interaction | dnd-kit, TanStack Table |
 
-- **Analytics**
-  - Historical data for the last 90 days (seeded) to visualize trends.
-  - Built to integrate with charts and advanced analytics views.
+## Requirements
 
-- **Navigation & UX**
-  - App‑wide sidebar with sections for Dashboard, Habits, Analytics, Calendar, Reminders, Community, Settings, and more.
-  - Breadcrumb‑based header for clear navigation context.
-  - Responsive layout with collapsible sidebar and app header/footer.
+- Node.js 20.9 or newer (Node.js 22 LTS is recommended).
+- pnpm.
+- A PostgreSQL database.
+- Google OAuth credentials if you want to use Google sign-in locally.
 
-- **Authentication & theming**
-  - Email/session authentication powered by NextAuth.
-  - Dark‑mode first interface using `next-themes`.
+## Getting started
 
-- **Developer‑friendly**
-  - Prisma schema and seed script for local development data.
-  - Type‑safe APIs and forms using Zod and React Hook Form.
+### 1. Get the source code
 
----
-
-## Tech Stack
-
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript, React 19
-- **Styling & UI**
-  - Tailwind CSS v4
-  - shadcn/ui components
-  - Radix UI primitives
-  - Lucide React icons
-- **State & Forms**
-  - React Hook Form
-  - Zod for validation
-- **Data & Backend**
-  - PostgreSQL (via `pg`)
-  - Prisma ORM (`@prisma/client`, `prisma`)
-  - Timezone utilities with `date-fns` and `date-fns-tz`
-- **Auth**
-  - NextAuth with Prisma adapter
-- **UX Enhancements**
-  - `@dnd-kit/*` for drag‑and‑drop interactions
-  - `@tanstack/react-table` for interactive tables
-  - `recharts` for charts and visualizations
-  - `sonner` for toasts/notifications
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- **Node.js** (LTS recommended)
-- **PostgreSQL** database
-
-### Installation
-
-1. **Clone the repository**
+Clone the repository using its Git URL, then enter the project directory:
 
 ```bash
-git clone https://github.com/your-username/habitflow.git
+git clone <your-repository-url>
 cd habitflow
 ```
 
-2. **Install dependencies**
+### 2. Install dependencies
+
+This project uses pnpm:
 
 ```bash
-npm install
+pnpm install
 ```
 
-3. **Set up environment variables**
+### 3. Configure environment variables
 
-Create a `.env` file in the project root and configure at least:
+Create a `.env` file in the project root. Use the variable names below and provide your own local values:
 
-```bash
-DATABASE_URL="postgresql://user:password@localhost:5432/habitflow"
-NEXTAUTH_SECRET="your-nextauth-secret"
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
+NEXTAUTH_SECRET="replace-with-a-long-random-secret"
 NEXTAUTH_URL="http://localhost:3000"
-# other provider / auth configs as needed
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
 ```
 
-4. **Set up the database & run migrations**
+`DATABASE_URL` is required for PostgreSQL. `NEXTAUTH_SECRET` is used by NextAuth.js. Google OAuth credentials are required for Google sign-in. For local Google OAuth, configure this authorized redirect URI in your Google OAuth client:
+
+```text
+http://localhost:3000/api/auth/callback/google
+```
+
+Do not commit `.env` or expose credentials in source control.
+
+### 4. Set up the database
+
+Make sure PostgreSQL is running and `DATABASE_URL` points to the database you intend to use.
+
+Apply the existing migrations in development:
 
 ```bash
-npx prisma db push
+pnpm exec prisma migrate dev
 ```
 
-5. **Seed sample data (optional but recommended)**
-
-The project includes a Prisma seed script to generate a deterministic dataset (habits, categories, daily stats, and completions).
+The Prisma client is generated by the project's install/postinstall setup. If you need to generate it manually, run:
 
 ```bash
-npx prisma db seed
+pnpm exec prisma generate
 ```
 
-6. **Run the development server**
+To populate the database with the project's seed data, run:
 
 ```bash
-npm run dev
+pnpm exec prisma db seed
 ```
 
-Visit `http://localhost:3000` in your browser.
+Seeding is optional. Only run it against a database where you are comfortable adding the sample records.
 
----
+### 5. Start the development server
 
-## Scripts
+```bash
+pnpm dev
+```
 
-- **`npm run dev`**: Start the Next.js development server.
-- **`npm run build`**: Create a production build.
-- **`npm start`**: Start the production server.
-- **`npm run lint`**: Run ESLint on the codebase.
-- **`npx prisma db seed`**: Seed the database using `prisma/seed.ts` (via the `prisma.seed` config).
+Open [http://localhost:3000](http://localhost:3000).
 
----
+## Available scripts
 
-## Project Structure (high level)
+| Command | Description |
+|---|---|
+| `pnpm dev` | Start the Next.js development server. |
+| `pnpm build` | Create a production build. |
+| `pnpm start` | Start the production server after building. |
+| `pnpm lint` | Run ESLint. |
+| `pnpm generate` | Generate the Prisma client. |
 
-- **`app/`**: Next.js App Router entrypoints and layouts.
-  - `app/layout.tsx`: Root layout, global providers (session, theme, tooltips, toasts).
-  - `app/(app)/layout.tsx`: Auth‑aware app layout with sidebar and header.
-- **`components/`**: Reusable UI and layout components.
-  - `components/app-layout/`: App header, sidebar, footer, and navigation.
-  - `components/ui/`: Design‑system style components (buttons, sidebar, etc.).
-- **`prisma/`**: Prisma schema and seed scripts.
-- **`public/`**: Static assets and sample data helpers.
+Additional Prisma commands:
 
----
+```bash
+pnpm exec prisma migrate dev      # Create/apply migrations in development
+pnpm exec prisma migrate deploy   # Apply committed migrations in deployment
+pnpm exec prisma db seed          # Run the seed script
+pnpm exec prisma generate         # Generate Prisma Client
+```
 
-## Notes
+## Project structure
 
-- Habitflow is currently in early development (`version 0.1.0`).
-- The UI/UX is optimized for a dark theme and desktop‑first layouts but is being iterated to support more use‑cases over time.
+```text
+habitflow/
+├── app/
+│   ├── (app)/              # Authenticated application pages
+│   ├── (public)/           # Public pages and documentation
+│   └── api/                # API routes
+├── components/             # Shared UI and application components
+├── hooks/                  # React hooks
+├── lib/                    # Authentication, Prisma, and utilities
+├── prisma/
+│   ├── migrations/         # Database migrations
+│   ├── schema.prisma       # Prisma data model
+│   └── seed.ts             # Optional sample data seed
+├── public/                 # Static assets
+├── types/                  # TypeScript and validation types
+├── prisma.config.ts        # Prisma CLI configuration
+└── package.json
+```
 
+## Deployment notes
 
+- Configure the production `DATABASE_URL`, `NEXTAUTH_SECRET`, and Google OAuth credentials in your hosting provider's environment settings.
+- Set `NEXTAUTH_URL` to the deployed application URL when required by the hosting environment.
+- Add the production Google OAuth callback URL to the Google OAuth client's authorized redirect URIs:
+
+```text
+https://YOUR_DOMAIN/api/auth/callback/google
+```
+
+- Apply committed database migrations during deployment with:
+
+```bash
+pnpm exec prisma migrate deploy
+```
+
+- Build and start the application using the package scripts (`pnpm build` and `pnpm start`).
+
+See the in-app Deployment documentation for the project's deployment walkthrough.
+
+## Documentation
+
+The application includes in-app documentation covering its architecture, database schema, technology stack, and deployment.
+
+## License
+
+No license is specified in this repository yet. Add a `LICENSE` file if you intend to distribute the project under an open-source license.
