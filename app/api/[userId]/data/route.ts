@@ -6,6 +6,9 @@ import prisma from "@/lib/prisma";
 type Params = {
     params: Promise<{ userId: string }>;
 };
+function isValidDate(value: unknown) {
+    return typeof value === "string" && !Number.isNaN(Date.parse(value));
+}
 
 export async function GET(_: NextRequest, { params }: Params) {
     try {
@@ -56,7 +59,16 @@ export async function POST(request: NextRequest, { params }: Params) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const backup = await request.json();
+        let backup;
+
+        try {
+            backup = await request.json();
+        } catch {
+            return NextResponse.json(
+                { error: "Invalid JSON backup file" },
+                { status: 400 }
+            );
+        }
 
         if (
             backup?.app !== "HabitFlow" ||
@@ -120,20 +132,26 @@ export async function POST(request: NextRequest, { params }: Params) {
                     !item.title.trim() ||
                     typeof item.categoryId !== "string" ||
                     !item.categoryId ||
-                    typeof item.startDate !== "string" &&
-                    !(item.startDate instanceof Date)
+                    !isValidDate(item.startDate) ||
+                    (item.endDate !== null && item.endDate !== undefined && !isValidDate(item.endDate)) ||
+                    (item.archivedAt !== null && item.archivedAt !== undefined && !isValidDate(item.archivedAt))
             ) ||
             completions.some(
                 (item: any) =>
                     typeof item.habitId !== "string" ||
-                    !item.habitId
+                    !item.habitId ||
+                    !isValidDate(item.date) ||
+                    !isValidDate(item.completedAt)
             ) ||
             dailyStats.some(
                 (item: any) =>
                     typeof item.habitId !== "string" ||
                     !item.habitId ||
                     !Number.isInteger(item.completionCount) ||
-                    !Number.isInteger(item.targetCount)
+                    !Number.isInteger(item.targetCount) ||
+                    !isValidDate(item.date) ||
+                    item.completionCount < 0 ||
+                    item.targetCount < 1
             ) ||
             reminders.some(
                 (item: any) =>
@@ -144,8 +162,10 @@ export async function POST(request: NextRequest, { params }: Params) {
                         (day: number) =>
                             !Number.isInteger(day) || day < 0 || day > 6
                     ) ||
+                    new Set(item.daysOfWeek).size !== item.daysOfWeek.length ||
                     typeof item.enabled !== "boolean" ||
-                    !item.time
+                    !item.time ||
+                    !isValidDate(item.time)
             )
         ) {
             return NextResponse.json(
