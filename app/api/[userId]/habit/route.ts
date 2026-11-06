@@ -36,10 +36,24 @@ export async function POST(
         }
 
         // 4. Parse request body
+        // 4. Parse and validate request body
         let body: Record<string, unknown>;
 
         try {
-            body = await req.json();
+            const parsedBody: unknown = await req.json();
+
+            if (
+                typeof parsedBody !== "object" ||
+                parsedBody === null ||
+                Array.isArray(parsedBody)
+            ) {
+                return Response.json(
+                    { error: "Invalid request body" },
+                    { status: 400 }
+                );
+            }
+
+            body = parsedBody as Record<string, unknown>;
         } catch {
             return Response.json(
                 { error: "Invalid JSON body" },
