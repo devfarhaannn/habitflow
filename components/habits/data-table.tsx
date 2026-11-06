@@ -533,6 +533,9 @@ export function DataTable1({
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
+
+  const [columnPreferencesLoaded, setColumnPreferencesLoaded] =
+    React.useState(false)
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
@@ -544,6 +547,31 @@ export function DataTable1({
     useSensor(KeyboardSensor, {})
   )
   const [categories, setCategories] = React.useState<{ id: string; title: string }[]>([]);
+
+  React.useEffect(() => {
+    const savedPreferences = localStorage.getItem(
+      `habitflow-columns-${userId}`
+    )
+
+    if (savedPreferences) {
+      try {
+        setColumnVisibility(JSON.parse(savedPreferences))
+      } catch {
+        localStorage.removeItem(`habitflow-columns-${userId}`)
+      }
+    }
+
+    setColumnPreferencesLoaded(true)
+  }, [userId])
+
+  React.useEffect(() => {
+    if (!columnPreferencesLoaded) return
+
+    localStorage.setItem(
+      `habitflow-columns-${userId}`,
+      JSON.stringify(columnVisibility)
+    )
+  }, [columnVisibility, columnPreferencesLoaded, userId])
 
   React.useEffect(() => {
     const fetchCategories = async () => {
