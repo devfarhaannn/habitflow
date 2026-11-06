@@ -54,13 +54,17 @@ export function HabitCalendar({
 }: Props) {
     const [selectedDate, setSelectedDate] = useState(new Date());
 
-    const selectedDateKey = format(selectedDate, "yyyy-MM-dd");
+    const selectedDateKey = formatInTimeZone(
+        selectedDate,
+        timezone,
+        "yyyy-MM-dd"
+    );
 
     const events: CalendarEvent[] = stats.map((stat) => {
         const start = new Date(`${stat.dateKey}T09:00:00`);
         const end = new Date(start);
 
-        end.setMinutes(30);
+        end.setMinutes(end.getMinutes() + 30);
 
         const habit = habits.find((item) => item.id === stat.habitId);
 
@@ -195,7 +199,11 @@ export function HabitCalendar({
 
                                 <CardTitle>
                                     Habit History —{" "}
-                                    {format(selectedDate, "MMMM d, yyyy")}
+                                    {formatInTimeZone(
+                                        selectedDate,
+                                        timezone,
+                                        "MMMM d, yyyy"
+                                    )}
                                 </CardTitle>
                             </div>
                         </CardHeader>
