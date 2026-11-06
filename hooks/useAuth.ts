@@ -48,6 +48,10 @@ export function useAuth() {
                     return false;
                 }
                 return true;
+            } catch (error) {
+                console.error("Login error:", error);
+                setError("UNKNOWN_ERROR");
+                return false;
             } finally {
                 setLoading(false);
             }
@@ -84,6 +88,10 @@ export function useAuth() {
 
                 return await login("credentials", email, password);
 
+            } catch (error) {
+                console.error("Registration error:", error);
+                setError("UNKNOWN_ERROR");
+                return false;
             } finally {
                 setLoading(false);
             }

@@ -31,6 +31,20 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     const { register, login, loading, error } = useAuth();
     const router = useRouter();
 
+    function handleGoogleSignup() {
+        const detectedTimezone =
+            Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        const timezone =
+            detectedTimezone === "Asia/Calcutta"
+                ? "Asia/Kolkata"
+                : detectedTimezone;
+
+        document.cookie = `habitflow-timezone=${encodeURIComponent(timezone)}; path=/; max-age=300; SameSite=Lax`;
+
+        login("google", "", "");
+    }
+
     useEffect(() => {
         if (!error) return;
 
@@ -228,7 +242,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                                 <Button
                                     variant="outline"
                                     type="button"
-                                    onClick={() => login("google", "", "")}
+                                    onClick={handleGoogleSignup}
                                 >
                                     Sign up with Google
                                 </Button>
