@@ -1,4 +1,6 @@
+
 "use client";
+
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 type ClassValue =
@@ -10,8 +12,10 @@ type ClassValue =
     | null
     | boolean
     | undefined;
-type ClassDictionary = Record<string, any>;
+
+type ClassDictionary = Record<string, unknown>;
 type ClassArray = ClassValue[];
+
 function clsx(...inputs: ClassValue[]): string {
     return inputs.filter(Boolean).join(" ");
 }
@@ -25,10 +29,11 @@ type hsl = {
 type hex = {
     hex: string;
 };
+
 type Color = hsl & hex;
 
 type ColorPickerProps = {
-    value: string; // hex like "#1C9488"
+    value: string;
     onChange: (hex: string) => void;
 };
 
@@ -55,11 +60,13 @@ function hslToHex({ h, s, l }: hsl) {
 
     const k = (n: number) => (n + h / 30) % 12;
     const a = s * Math.min(l, 1 - l);
+
     const f = (n: number) =>
         l - a * Math.max(Math.min(k(n) - 3, 9 - k(n), 1), -1);
-    let r = Math.round(255 * f(0));
-    let g = Math.round(255 * f(8));
-    let b = Math.round(255 * f(4));
+
+    const r = Math.round(255 * f(0));
+    const g = Math.round(255 * f(8));
+    const b = Math.round(255 * f(4));
 
     const toHex = (x: number) => {
         const hex = x.toString(16);
@@ -70,10 +77,8 @@ function hslToHex({ h, s, l }: hsl) {
 }
 
 function hexToHsl({ hex }: hex): hsl {
-    // Ensure the hex string is formatted properly
     hex = hex.replace(/^#/, "");
 
-    // Handle 3-digit hex
     if (hex.length === 3) {
         hex = hex
             .split("")
@@ -81,31 +86,34 @@ function hexToHsl({ hex }: hex): hsl {
             .join("");
     }
 
-    // Pad with zeros if incomplete
     while (hex.length < 6) {
         hex += "0";
     }
 
-    // Convert hex to RGB
     let r = parseInt(hex.slice(0, 2), 16) || 0;
     let g = parseInt(hex.slice(2, 4), 16) || 0;
     let b = parseInt(hex.slice(4, 6), 16) || 0;
 
-    // Then convert RGB to HSL
     r /= 255;
     g /= 255;
     b /= 255;
+
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
+
     let h = 0;
     let s: number;
-    let l = (max + min) / 2;
+    const l = (max + min) / 2;
 
     if (max === min) {
-        h = s = 0; // achromatic
+        h = s = 0;
     } else {
         const d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+        s = l > 0.5
+            ? d / (2 - max - min)
+            : d / (max + min);
+
         switch (max) {
             case r:
                 h = (g - b) / d + (g < b ? 6 : 0);
@@ -117,11 +125,16 @@ function hexToHsl({ hex }: hex): hsl {
                 h = (r - g) / d + 4;
                 break;
         }
+
         h /= 6;
         h *= 360;
     }
 
-    return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
+    return {
+        h: Math.round(h),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100),
+    };
 }
 
 const DraggableColorCanvas = ({
@@ -138,19 +151,31 @@ const DraggableColorCanvas = ({
     const calculateSaturationAndLightness = useCallback(
         (clientX: number, clientY: number) => {
             if (!colorAreaRef.current) return;
+
             const rect = colorAreaRef.current.getBoundingClientRect();
+
             const x = clientX - rect.left;
             const y = clientY - rect.top;
+
             const xClamped = Math.max(0, Math.min(x, rect.width));
             const yClamped = Math.max(0, Math.min(y, rect.height));
-            const newSaturation = Math.round((xClamped / rect.width) * 100);
-            const newLightness = 100 - Math.round((yClamped / rect.height) * 100);
-            handleChange({ s: newSaturation, l: newLightness });
+
+            const newSaturation = Math.round(
+                (xClamped / rect.width) * 100
+            );
+
+            const newLightness = 100 - Math.round(
+                (yClamped / rect.height) * 100
+            );
+
+            handleChange({
+                s: newSaturation,
+                l: newLightness,
+            });
         },
         [handleChange],
     );
 
-    // Mouse event handlers
     const handleMouseMove = useCallback(
         (e: MouseEvent) => {
             e.preventDefault();
@@ -169,13 +194,17 @@ const DraggableColorCanvas = ({
         calculateSaturationAndLightness(e.clientX, e.clientY);
     };
 
-    // Touch event handlers
     const handleTouchMove = useCallback(
         (e: TouchEvent) => {
             e.preventDefault();
+
             const touch = e.touches[0];
+
             if (touch) {
-                calculateSaturationAndLightness(touch.clientX, touch.clientY);
+                calculateSaturationAndLightness(
+                    touch.clientX,
+                    touch.clientY
+                );
             }
         },
         [calculateSaturationAndLightness],
@@ -187,10 +216,16 @@ const DraggableColorCanvas = ({
 
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
         e.preventDefault();
+
         const touch = e.touches[0];
+
         if (touch) {
             setDragging(true);
-            calculateSaturationAndLightness(touch.clientX, touch.clientY);
+
+            calculateSaturationAndLightness(
+                touch.clientX,
+                touch.clientY
+            );
         }
     };
 
@@ -198,7 +233,9 @@ const DraggableColorCanvas = ({
         if (dragging) {
             window.addEventListener("mousemove", handleMouseMove);
             window.addEventListener("mouseup", handleMouseUp);
-            window.addEventListener("touchmove", handleTouchMove, { passive: false });
+            window.addEventListener("touchmove", handleTouchMove, {
+                passive: false,
+            });
             window.addEventListener("touchend", handleTouchEnd);
         } else {
             window.removeEventListener("mousemove", handleMouseMove);
@@ -255,6 +292,7 @@ function sanitizeHex(val: string) {
     const sanitized = val.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
     return sanitized;
 }
+
 export function ColorPicker({ value, onChange }: ColorPickerProps) {
     const sanitizedHex = sanitizeHex(value);
     const hsl = hexToHsl({ hex: sanitizedHex });
@@ -264,33 +302,30 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
         hex: sanitizedHex,
     };
 
-    // Update from hex input
     const handleHexInputChange = (newVal: string) => {
         const hex = sanitizeHex(newVal);
+
         if (hex.length === 6) {
-            const hsl = hexToHsl({ hex });
             onChange(`#${hex}`);
         } else if (hex.length < 6) {
             onChange(`#${hex}`);
         }
     };
+
     return (
         <>
             <style
                 id="slider-thumb-style"
                 dangerouslySetInnerHTML={{
-                    // For the input range thumb styles. Some things are just easier to add to an external stylesheet.
-                    // don't actually put this in production.
-                    // Just putting this here for the sake of a single file in this example
                     __html: `
               input[type='range']::-webkit-slider-thumb {
                 -webkit-appearance: none;
                 appearance: none;
-                width: 18px; 
+                width: 18px;
                 height: 18px;
                 background: transparent;
                 border: 4px solid #FFFFFF;
-                box-shadow: 0 0 0 1px #e4e4e7; 
+                box-shadow: 0 0 0 1px #e4e4e7;
                 cursor: pointer;
                 border-radius: 50%;
               }
@@ -312,22 +347,23 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
                 border: 4px solid #FFFFFF;
                 box-shadow: 0 0 0 1px #e4e4e7;
               }
-    
+
               .dark input[type='range']::-webkit-slider-thumb {
                 border: 4px solid rgb(24 24 27);
-                box-shadow: 0 0 0 1px #3f3f46; 
+                box-shadow: 0 0 0 1px #3f3f46;
               }
               .dark input[type='range']::-moz-range-thumb {
                 border: 4px solid rgb(24 24 27);
-                box-shadow: 0 0 0 1px #3f3f46; 
+                box-shadow: 0 0 0 1px #3f3f46;
               }
               .dark input[type='range']::-ms-thumb {
                 border: 4px solid rgb(24 24 27);
-                box-shadow: 0 0 0 1px #3f3f46; 
+                box-shadow: 0 0 0 1px #3f3f46;
               }
               `,
                 }}
             />
+
             <div
                 style={
                     {
@@ -339,16 +375,19 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
             >
                 <DraggableColorCanvas
                     {...color}
-                    handleChange={(parital) => {
-                        const newColor = { ...color, ...parital };
-                        const hex_formatted = hslToHex({
+                    handleChange={(partial) => {
+                        const newColor = { ...color, ...partial };
+
+                        const hexFormatted = hslToHex({
                             h: newColor.h,
                             s: newColor.s,
                             l: newColor.l,
                         });
-                        onChange(`#${hex_formatted}`);
+
+                        onChange(`#${hexFormatted}`);
                     }}
                 />
+
                 <input
                     type="range"
                     min="0"
@@ -368,38 +407,35 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
                     onChange={(e) => {
                         const hue = e.target.valueAsNumber;
                         const newColor = { ...color, h: hue };
-                        const hex_formatted = hslToHex({
+
+                        const hexFormatted = hslToHex({
                             h: newColor.h,
                             s: newColor.s,
                             l: newColor.l,
                         });
-                        onChange(`#${hex_formatted}`);
+
+                        onChange(`#${hexFormatted}`);
                     }}
                 />
+
                 <div className="relative h-fit w-full">
                     <div className="absolute inset-y-0 flex items-center px-1.25">
                         <HashtagIcon className="size-4 text-zinc-600" />
                     </div>
+
                     <input
                         id="color-value"
                         className={clsx(
                             "flex w-full items-center justify-between rounded-lg border p-2 text-sm focus:ring-1",
-                            //10 px for the paddng on the hashtag, 16px for the icon
                             "pl-6.5",
-                            // 10px for the padding on the color badge, 28px for the color badge
                             "pr-9.5",
-                            // bg & text
-                            "bg-black/2.5 text-zinc-700 dark:bg-white/2.5  dark:text-zinc-200",
-                            // borders & backgrounds
+                            "bg-black/2.5 text-zinc-700 dark:bg-white/2.5 dark:text-zinc-200",
                             "border-zinc-200 dark:border-zinc-700",
-                            // hover classes
                             "hover:border-zinc-300",
                             "dark:hover:border-zinc-600",
-                            // focus classes
                             "focus:border-zinc-300 focus:ring-zinc-300",
                             "dark:focus:border-zinc-600 dark:focus:ring-zinc-600",
-                            // selection styles
-                            "selection:bg-black/20  selection:text-black",
+                            "selection:bg-black/20 selection:text-black",
                             "dark:selection:bg-white/30 dark:selection:text-white",
                         )}
                         value={color.hex}
@@ -407,6 +443,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
                             handleHexInputChange(e.target.value);
                         }}
                     />
+
                     <div className="absolute inset-y-0 right-0 flex h-full items-center px-1.25">
                         <div
                             className="size-7 rounded-md border border-zinc-200 dark:border-zinc-800"

@@ -38,8 +38,7 @@ export default function CommunityPage() {
                 <Users className="mx-auto mb-4 size-12 text-primary" />
                 <h2 className="text-xl font-semibold">A community is coming soon!</h2>
                 <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                    We're preparing a space where HabitFlow users can connect,
-                    share progress and motivate one another.
+                   We&apos;re preparing a space where HabitFlow users can connect,
                 </p>
             </div>
 

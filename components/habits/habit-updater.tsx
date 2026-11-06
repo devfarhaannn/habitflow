@@ -5,13 +5,31 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "../ui/drawer";
+import {
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerTitle,
+} from "../ui/drawer";
 import { IconRenderer } from "../icon-picker/icon-picker";
 import { Form, FormControl } from "../ui/form";
-import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field";
+import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { IconArchive, IconCircleCheckFilled, IconLoader } from "@tabler/icons-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../ui/select";
+import {
+    IconArchive,
+    IconCircleCheckFilled,
+    IconLoader,
+} from "@tabler/icons-react";
 import { IconPickerDialog } from "../icon-picker/new-picker";
 import { ColorPickerDialog } from "../color-picker/color-dailog";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
@@ -20,7 +38,12 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "../ui/calendar";
 import { Checkbox } from "../ui/checkbox";
-import { useEffect, useRef, useState } from "react";
+import {
+    useEffect,
+    useRef,
+    useState,
+    type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
     DEFAULT_REMINDER_SETTINGS,
@@ -29,20 +52,25 @@ import {
     type HabitReminderResponse,
 } from "@/types/types";
 
-export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
-    item: z.infer<typeof HabitPageSchema>,
-    open: boolean,
+export function HabitUpdaterViewer({
+    item,
+    open,
+    categories,
+    onOpenChange,
+}: {
+    item: z.infer<typeof HabitPageSchema>;
+    open: boolean;
     categories: { id: string; title: string }[];
-    onOpenChange: React.Dispatch<React.SetStateAction<boolean>>
+    onOpenChange: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-    const isMobile = useIsMobile()
+    const isMobile = useIsMobile();
     const { user } = useAuth();
     const router = useRouter();
+
     const [saving, setSaving] = useState(false);
     const [reminder, setReminder] = useState<ReminderSettings>(
         DEFAULT_REMINDER_SETTINGS
     );
-
     const [reminderLoading, setReminderLoading] = useState(false);
 
     const originalReminder = useRef<ReminderSettings>(
@@ -62,8 +90,9 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
             icon: item.icon,
             color: item.color,
             endDate: item.endDate,
-        }
-    })
+        },
+    });
+
     useEffect(() => {
         if (open) {
             form.reset({
@@ -96,7 +125,8 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                     throw new Error("Failed to load reminder settings.");
                 }
 
-                const reminders: HabitReminderResponse[] = await response.json();
+                const reminders: HabitReminderResponse[] =
+                    await response.json();
 
                 const existing = reminders.find(
                     (reminderItem) => reminderItem.habitId === item.id
@@ -104,11 +134,13 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
 
                 const settings: ReminderSettings = existing
                     ? {
-                        id: existing.id,
-                        enabled: existing.enabled,
-                        time: new Date(existing.time).toISOString().slice(11, 16),
-                        daysOfWeek: existing.daysOfWeek,
-                    }
+                          id: existing.id,
+                          enabled: existing.enabled,
+                          time: new Date(existing.time)
+                              .toISOString()
+                              .slice(11, 16),
+                          daysOfWeek: existing.daysOfWeek,
+                      }
                     : DEFAULT_REMINDER_SETTINGS;
 
                 if (!cancelled) {
@@ -130,48 +162,57 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
             }
         };
 
-        fetchReminder();
+        void fetchReminder();
 
         return () => {
             cancelled = true;
         };
     }, [open, user?.id, item.id]);
 
-
     async function onSubmit(values: z.infer<typeof editHabitSchema>) {
-        const changedValues: Partial<z.infer<typeof editHabitSchema>> = {};
+        const changedValues: Partial<
+            z.infer<typeof editHabitSchema>
+        > = {};
 
-        (Object.keys(values) as Array<keyof typeof values>).forEach((key) => {
-            const newValue = values[key];
-            const oldValue = item[key];
+        (Object.keys(values) as Array<keyof typeof values>).forEach(
+            (key) => {
+                const newValue = values[key];
+                const oldValue = item[key];
 
-            if (newValue === undefined) return;
+                if (newValue === undefined) return;
 
-            if (key === "endDate") {
-                const newDate = newValue ? new Date(newValue).getTime() : null;
-                const oldDate = oldValue ? new Date(oldValue).getTime() : null;
+                if (key === "endDate") {
+                    const newDate = newValue
+                        ? new Date(newValue).getTime()
+                        : null;
 
-                if (newDate !== oldDate) {
-                    (changedValues as Record<string, unknown>)[key] = newValue;
+                    const oldDate = oldValue
+                        ? new Date(oldValue).getTime()
+                        : null;
+
+                    if (newDate !== oldDate) {
+                        (changedValues as Record<string, unknown>)[key] =
+                            newValue;
+                    }
+
+                    return;
                 }
 
-                return;
+                if (newValue !== oldValue) {
+                    (changedValues as Record<string, unknown>)[key] =
+                        newValue;
+                }
             }
-
-            if (newValue !== oldValue) {
-                (changedValues as Record<string, unknown>)[key] = newValue;
-            }
-        });
+        );
 
         const hasHabitChanges = Object.keys(changedValues).length > 0;
-
         const initialReminder = originalReminder.current;
 
         const hasReminderChanges =
             reminder.enabled !== initialReminder.enabled ||
             reminder.time !== initialReminder.time ||
             [...reminder.daysOfWeek].sort().join(",") !==
-            [...initialReminder.daysOfWeek].sort().join(",");
+                [...initialReminder.daysOfWeek].sort().join(",");
 
         if (!hasHabitChanges && !hasReminderChanges) {
             toast.info("Nothing changed.");
@@ -203,7 +244,9 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                     }
                 );
 
-                const habitData = await habitResponse.json().catch(() => null);
+                const habitData = await habitResponse
+                    .json()
+                    .catch(() => null);
 
                 if (!habitResponse.ok) {
                     throw new Error(
@@ -226,13 +269,14 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                             body: JSON.stringify(
                                 reminder.enabled
                                     ? {
-                                        time: reminder.time,
-                                        daysOfWeek: reminder.daysOfWeek,
-                                        enabled: true,
-                                    }
+                                          time: reminder.time,
+                                          daysOfWeek:
+                                              reminder.daysOfWeek,
+                                          enabled: true,
+                                      }
                                     : {
-                                        enabled: false,
-                                    }
+                                          enabled: false,
+                                      }
                             ),
                         }
                     );
@@ -241,14 +285,17 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
 
                     if (!reminderResponse.ok) {
                         throw new Error(
-                            reminderData?.error || "Failed to update reminder."
+                            reminderData?.error ||
+                                "Failed to update reminder."
                         );
                     }
 
                     const savedSettings: ReminderSettings = {
                         id: reminderData.id,
                         enabled: reminderData.enabled,
-                        time: new Date(reminderData.time).toISOString().slice(11, 16),
+                        time: new Date(reminderData.time)
+                            .toISOString()
+                            .slice(11, 16),
                         daysOfWeek: reminderData.daysOfWeek,
                     };
 
@@ -277,14 +324,17 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
 
                     if (!reminderResponse.ok) {
                         throw new Error(
-                            reminderData?.error || "Failed to create reminder."
+                            reminderData?.error ||
+                                "Failed to create reminder."
                         );
                     }
 
                     const savedSettings: ReminderSettings = {
                         id: reminderData.id,
                         enabled: reminderData.enabled,
-                        time: new Date(reminderData.time).toISOString().slice(11, 16),
+                        time: new Date(reminderData.time)
+                            .toISOString()
+                            .slice(11, 16),
                         daysOfWeek: reminderData.daysOfWeek,
                     };
 
@@ -297,7 +347,6 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
 
             onOpenChange(false);
             router.refresh();
-
         } catch (error) {
             console.error("Update habit error:", error);
 
@@ -311,6 +360,9 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
         }
     }
 
+    function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
+        void form.handleSubmit(onSubmit)(event);
+    }
 
     return (
         <Drawer
@@ -327,42 +379,48 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
             }}
         >
             <DrawerContent>
-
                 <DrawerHeader className="gap-1">
                     <div className="flex items-center justify-start gap-4">
-                        <div className={`flex items-center gap-2 h-12 w-12 rounded-xl bg-background dark:bg-foreground`}
-                            style={{ backgroundColor: item.color }}>
+                        <div
+                            className="flex items-center gap-2 h-12 w-12 rounded-xl bg-background dark:bg-foreground"
+                            style={{ backgroundColor: item.color }}
+                        >
                             <IconRenderer
                                 icon={item.icon}
                                 className="size-8 w-full text-foreground dark:text-background"
                             />
                         </div>
+
                         <div>
                             <DrawerTitle>{item.title}</DrawerTitle>
                             <DrawerDescription>
-                                {item.description ? item.description : "No description available for this habit"}
+                                {item.description
+                                    ? item.description
+                                    : "No description available for this habit"}
                             </DrawerDescription>
                         </div>
-
                     </div>
-
                 </DrawerHeader>
 
                 <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
                     <Form {...form}>
                         <form
-                            onSubmit={form.handleSubmit(onSubmit)}
+                            onSubmit={handleFormSubmit}
                             className="flex flex-col gap-4"
                         >
-                            {/* title */}
+                            {/* Title */}
                             <div className="flex flex-col gap-3">
-                                <Controller name="title"
+                                <Controller
+                                    name="title"
                                     control={form.control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
                                             <FieldLabel htmlFor="form-rhf-demo-title">
                                                 Title
                                             </FieldLabel>
+
                                             <Input
                                                 {...field}
                                                 id="form-rhf-demo-title"
@@ -371,22 +429,30 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                                 autoComplete="off"
                                                 type="text"
                                             />
+
                                             {fieldState.invalid && (
-                                                <FieldError errors={[fieldState.error]} />
+                                                <FieldError
+                                                    errors={[fieldState.error]}
+                                                />
                                             )}
                                         </Field>
                                     )}
                                 />
                             </div>
-                            {/* description */}
+
+                            {/* Description */}
                             <div className="flex flex-col gap-3">
-                                <Controller name="description"
+                                <Controller
+                                    name="description"
                                     control={form.control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
                                             <FieldLabel htmlFor="form-rhf-demo-description">
                                                 Description
                                             </FieldLabel>
+
                                             <Input
                                                 {...field}
                                                 value={field.value ?? ""}
@@ -396,8 +462,11 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                                 autoComplete="off"
                                                 type="text"
                                             />
+
                                             {fieldState.invalid && (
-                                                <FieldError errors={[fieldState.error]} />
+                                                <FieldError
+                                                    errors={[fieldState.error]}
+                                                />
                                             )}
                                         </Field>
                                     )}
@@ -405,38 +474,48 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-
-                                {/* staus */}
+                                {/* Status */}
                                 <div className="flex flex-col gap-3">
-                                    <Controller name="status"
+                                    <Controller
+                                        name="status"
                                         control={form.control}
                                         render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
+                                            <Field
+                                                data-invalid={fieldState.invalid}
+                                            >
                                                 <FieldLabel htmlFor="form-rhf-demo-status">
                                                     Status
                                                 </FieldLabel>
-                                                <Select value={field.value} onValueChange={field.onChange}>
+
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={field.onChange}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                     </FormControl>
+
                                                     <SelectContent>
-                                                        <SelectItem value={"ACTIVE"}>
+                                                        <SelectItem value="ACTIVE">
                                                             <IconCircleCheckFilled className="size-4 fill-green-500" />
-                                                            {"ACTIVE"}
+                                                            ACTIVE
                                                         </SelectItem>
-                                                        <SelectItem value={"INACTIVE"}>
+
+                                                        <SelectItem value="INACTIVE">
                                                             <IconLoader className="size-4" />
-                                                            {"INACTIVE"}
+                                                            INACTIVE
                                                         </SelectItem>
-                                                        <SelectItem value={"COMPLETED"}>
+
+                                                        <SelectItem value="COMPLETED">
                                                             <IconCircleCheckFilled className="size-4 fill-blue-500" />
-                                                            {"COMPLETED"}
+                                                            COMPLETED
                                                         </SelectItem>
-                                                        <SelectItem value={"ARCHIVED"}>
+
+                                                        <SelectItem value="ARCHIVED">
                                                             <IconArchive className="size-4" />
-                                                            {"ARCHIVED"}
+                                                            ARCHIVED
                                                         </SelectItem>
                                                     </SelectContent>
                                                 </Select>
@@ -451,40 +530,55 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                         name="categoryId"
                                         control={form.control}
                                         render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
+                                            <Field
+                                                data-invalid={fieldState.invalid}
+                                            >
                                                 <FieldLabel htmlFor="form-rhf-demo-category">
                                                     Category
                                                 </FieldLabel>
-                                                <Select value={field.value ?? ""} onValueChange={field.onChange}>
+
+                                                <Select
+                                                    value={field.value ?? ""}
+                                                    onValueChange={field.onChange}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select category" />
                                                         </SelectTrigger>
                                                     </FormControl>
+
                                                     <SelectContent>
-                                                        {categories.map((category) => (
-                                                            <SelectItem key={category.id} value={category.id}>
-                                                                {category.title}
-                                                            </SelectItem>
-                                                        ))}
+                                                        {categories.map(
+                                                            (category) => (
+                                                                <SelectItem
+                                                                    key={category.id}
+                                                                    value={category.id}
+                                                                >
+                                                                    {category.title}
+                                                                </SelectItem>
+                                                            )
+                                                        )}
                                                     </SelectContent>
                                                 </Select>
                                             </Field>
                                         )}
                                     />
                                 </div>
-
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-3">
-                                    <Controller name="targetPerDay"
+                                    <Controller
+                                        name="targetPerDay"
                                         control={form.control}
                                         render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
+                                            <Field
+                                                data-invalid={fieldState.invalid}
+                                            >
                                                 <FieldLabel htmlFor="form-rhf-demo-target">
                                                     Counts per Streak
                                                 </FieldLabel>
+
                                                 <Input
                                                     {...field}
                                                     id="form-rhf-demo-target"
@@ -492,37 +586,60 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                                     placeholder="Target Count"
                                                     autoComplete="off"
                                                     type="number"
-                                                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.valueAsNumber
+                                                        )
+                                                    }
                                                 />
+
                                                 {fieldState.invalid && (
-                                                    <FieldError errors={[fieldState.error]} />
+                                                    <FieldError
+                                                        errors={[fieldState.error]}
+                                                    />
                                                 )}
                                             </Field>
                                         )}
                                     />
                                 </div>
+
                                 <div className="flex flex-col gap-3">
-                                    <Controller name="goalType"
+                                    <Controller
+                                        name="goalType"
                                         control={form.control}
                                         render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
+                                            <Field
+                                                data-invalid={fieldState.invalid}
+                                            >
                                                 <FieldLabel htmlFor="form-rhf-demo-goalType">
                                                     Frequency
                                                 </FieldLabel>
-                                                <Select value={field.value} onValueChange={field.onChange}>
+
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={field.onChange}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                     </FormControl>
+
                                                     <SelectContent>
-                                                        <SelectItem value={"DAILY"}>{"DAILY"}</SelectItem>
-                                                        <SelectItem value={"WEEKLY"}>{"WEEKLY"}</SelectItem>
-                                                        <SelectItem value={"MONTHLY"}>{"MONTHLY"}</SelectItem>
+                                                        <SelectItem value="DAILY">
+                                                            DAILY
+                                                        </SelectItem>
+                                                        <SelectItem value="WEEKLY">
+                                                            WEEKLY
+                                                        </SelectItem>
+                                                        <SelectItem value="MONTHLY">
+                                                            MONTHLY
+                                                        </SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </Field>
-                                        )} />
+                                        )}
+                                    />
                                 </div>
                             </div>
 
@@ -531,8 +648,8 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                     <Controller
                                         name="icon"
                                         control={form.control}
-                                        render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
+                                        render={({ field }) => (
+                                            <Field>
                                                 <IconPickerDialog
                                                     value={field.value}
                                                     onChange={field.onChange}
@@ -541,12 +658,13 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                         )}
                                     />
                                 </div>
+
                                 <div className="flex flex-col gap-3">
                                     <Controller
                                         name="color"
                                         control={form.control}
-                                        render={({ field, fieldState }) => (
-                                            <Field data-invalid={fieldState.invalid}>
+                                        render={({ field }) => (
+                                            <Field>
                                                 <ColorPickerDialog
                                                     value={field.value}
                                                     onChange={field.onChange}
@@ -562,55 +680,88 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                     name="endDate"
                                     control={form.control}
                                     render={({ field, fieldState }) => (
-                                        <Field data-invalid={fieldState.invalid}>
+                                        <Field
+                                            data-invalid={fieldState.invalid}
+                                        >
                                             <FieldLabel htmlFor="form-rhf-demo-endDate">
                                                 End Date
                                             </FieldLabel>
+
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                     <Button
                                                         type="button"
                                                         variant="outline"
-                                                        className={`w-full justify-between text-left font-normal ${!field.value && "text-muted-foreground"
-                                                            }`}
+                                                        className={`w-full justify-between text-left font-normal ${
+                                                            !field.value
+                                                                ? "text-muted-foreground"
+                                                                : ""
+                                                        }`}
                                                     >
                                                         {field.value ? (
-                                                            format(field.value, "PPP")
+                                                            format(
+                                                                field.value,
+                                                                "PPP"
+                                                            )
                                                         ) : (
-                                                            <span>Pick a date</span>
+                                                            <span>
+                                                                Pick a date
+                                                            </span>
                                                         )}
+
                                                         <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
                                                     </Button>
                                                 </PopoverTrigger>
 
-                                                <PopoverContent className="w-auto p-0" align="start">
+                                                <PopoverContent
+                                                    className="w-auto p-0"
+                                                    align="start"
+                                                >
                                                     <Calendar
                                                         mode="single"
-                                                        selected={field.value ?? undefined}
-                                                        onSelect={(date) => field.onChange(date)}
+                                                        selected={
+                                                            field.value ??
+                                                            undefined
+                                                        }
+                                                        onSelect={(date) =>
+                                                            field.onChange(date)
+                                                        }
                                                         disabled={(date) => {
-                                                            const today = new Date()
-                                                            today.setHours(0, 0, 0, 0) // normalize to start of today
-                                                            return date < today
+                                                            const today =
+                                                                new Date();
+
+                                                            today.setHours(
+                                                                0,
+                                                                0,
+                                                                0,
+                                                                0
+                                                            );
+
+                                                            return date < today;
                                                         }}
                                                         initialFocus
                                                         captionLayout="dropdown"
                                                     />
                                                 </PopoverContent>
                                             </Popover>
+
                                             {fieldState.invalid && (
-                                                <FieldError errors={[fieldState.error]} />
+                                                <FieldError
+                                                    errors={[fieldState.error]}
+                                                />
                                             )}
                                         </Field>
                                     )}
                                 />
                             </div>
 
-
+                            {/* Habit Reminder */}
                             <div className="space-y-4 rounded-lg border p-4">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm font-medium">Habit Reminder</p>
+                                        <p className="text-sm font-medium">
+                                            Habit Reminder
+                                        </p>
                                         <p className="text-xs text-muted-foreground">
                                             Set a time and days for this habit.
                                         </p>
@@ -618,7 +769,9 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
 
                                     <Checkbox
                                         checked={reminder.enabled}
-                                        disabled={reminderLoading || saving}
+                                        disabled={
+                                            reminderLoading || saving
+                                        }
                                         onCheckedChange={(checked) =>
                                             setReminder((prev) => ({
                                                 ...prev,
@@ -638,7 +791,9 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                             <Input
                                                 type="time"
                                                 value={reminder.time}
-                                                disabled={reminderLoading || saving}
+                                                disabled={
+                                                    reminderLoading || saving
+                                                }
                                                 onChange={(e) =>
                                                     setReminder((prev) => ({
                                                         ...prev,
@@ -649,7 +804,9 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <p className="text-sm font-medium">Repeat on</p>
+                                            <p className="text-sm font-medium">
+                                                Repeat on
+                                            </p>
 
                                             <div className="flex flex-wrap gap-3">
                                                 {WEEKDAYS.map((day) => (
@@ -658,23 +815,42 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                                         className="flex items-center gap-2 text-sm"
                                                     >
                                                         <Checkbox
-                                                            checked={reminder.daysOfWeek.includes(day.value)}
-                                                            disabled={reminderLoading || saving}
-                                                            onCheckedChange={(checked) => {
-                                                                setReminder((prev) => {
-                                                                    const days = checked
-                                                                        ? [...prev.daysOfWeek, day.value]
-                                                                        : prev.daysOfWeek.filter(
-                                                                            (value) => value !== day.value
-                                                                        );
+                                                            checked={reminder.daysOfWeek.includes(
+                                                                day.value
+                                                            )}
+                                                            disabled={
+                                                                reminderLoading ||
+                                                                saving
+                                                            }
+                                                            onCheckedChange={(
+                                                                checked
+                                                            ) => {
+                                                                setReminder(
+                                                                    (prev) => {
+                                                                        const days =
+                                                                            checked
+                                                                                ? [
+                                                                                      ...prev.daysOfWeek,
+                                                                                      day.value,
+                                                                                  ]
+                                                                                : prev.daysOfWeek.filter(
+                                                                                      (
+                                                                                          value
+                                                                                      ) =>
+                                                                                          value !==
+                                                                                          day.value
+                                                                                  );
 
-                                                                    return {
-                                                                        ...prev,
-                                                                        daysOfWeek: days,
-                                                                    };
-                                                                });
+                                                                        return {
+                                                                            ...prev,
+                                                                            daysOfWeek:
+                                                                                days,
+                                                                        };
+                                                                    }
+                                                                );
                                                             }}
                                                         />
+
                                                         {day.label}
                                                     </label>
                                                 ))}
@@ -684,24 +860,24 @@ export function HabitUpdaterViewer({ item, open, categories, onOpenChange }: {
                                 )}
                             </div>
 
-
                             <DrawerFooter className="gap-4">
                                 <Button type="submit" disabled={saving}>
                                     {saving ? "Saving..." : "Save Changes"}
                                 </Button>
+
                                 <DrawerClose asChild>
-                                    <Button variant="outline" disabled={saving}>
+                                    <Button
+                                        variant="outline"
+                                        disabled={saving}
+                                    >
                                         Cancel
                                     </Button>
                                 </DrawerClose>
                             </DrawerFooter>
-
                         </form>
                     </Form>
                 </div>
-
-
             </DrawerContent>
         </Drawer>
-    )
+    );
 }

@@ -1,6 +1,6 @@
-import ContactSection from "@/components/pubic-layout/contact-section";
+
 import { GithubIcon, LinkedinIcon, Mail, TwitterIcon } from "lucide-react";
-import Image from "next/image";
+
 
 export default function ContactPage() {
     return (
@@ -24,8 +24,8 @@ export default function ContactPage() {
                             </div>
 
                             <p className="text-muted-foreground max-w-xl text-lg">
-                                Whether you're looking for more information, have a suggestion, or
-                                need help with something, we're here for you.
+                                Whether you&apos;re looking for more information, have a suggestion, or
+                                need help with something, we&apos;re here for you.
                             </p>
 
                         </div>

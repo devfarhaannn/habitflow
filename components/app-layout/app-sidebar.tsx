@@ -1,10 +1,29 @@
+
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
+import {
+  Calendar1,
+  ChartBarBig,
+  Check,
+  CircleGauge,
+  CircleQuestionMark,
+  Database,
+  FileSpreadsheet,
+  FileText,
+  GalleryVerticalEnd,
+  LayoutList,
+  Search,
+  Settings,
+  UsersRound,
+} from "lucide-react"
+
 import { NavDocuments } from "@/components/app-layout/sidebar/nav-documents"
 import { NavMain } from "@/components/app-layout/sidebar/nav-main"
 import { NavSecondary } from "@/components/app-layout/sidebar/nav-secondary"
 import { NavUser } from "@/components/app-layout/sidebar/nav-user"
+
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +33,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Brain, Calendar1, Camera, ChartBarBig, Check, CircleGauge, CircleQuestionMark, Database, FileSpreadsheet, FileText, GalleryVerticalEnd, LayoutList, Search, Settings, UsersRound } from "lucide-react"
 
 const data = {
   navMain: [
@@ -47,56 +65,9 @@ const data = {
       title: "Community",
       url: "/community",
       icon: UsersRound,
-    }
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: Camera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: FileText,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: Brain,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
     },
   ],
+
   navSecondary: [
     {
       title: "Settings",
@@ -114,6 +85,7 @@ const data = {
       icon: Search,
     },
   ],
+
   documents: [
     {
       name: "Export / Import Data",
@@ -133,8 +105,9 @@ const data = {
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-
+export function AppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -144,19 +117,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <a href="/">
+              <Link href="/">
                 <GalleryVerticalEnd className="size-5" />
-                <span className="text-base font-semibold">HabitFlow Inc.</span>
-              </a>
+                <span className="text-base font-semibold">
+                  HabitFlow Inc.
+                </span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavSecondary
+          items={data.navSecondary}
+          className="mt-auto"
+        />
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>

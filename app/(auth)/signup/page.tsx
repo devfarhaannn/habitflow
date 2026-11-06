@@ -3,6 +3,7 @@ import { SignupForm } from "@/components/forms/signup-form";
 import { NEXT_AUTH } from "@/lib/authOptions";
 import { GalleryVerticalEnd } from "lucide-react";
 import { getServerSession } from "next-auth";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function RegisterPage() {
@@ -15,7 +16,7 @@ export default async function RegisterPage() {
     return (
         <main className="flex min-h-svh w-full items-center justify-center px-4 py-8">
             <div className="flex w-full max-w-xl flex-col gap-6">
-                <a
+                <Link
                     href="/"
                     className="flex items-center justify-center gap-2 self-center font-medium"
                 >
@@ -23,7 +24,7 @@ export default async function RegisterPage() {
                         <GalleryVerticalEnd className="size-4" />
                     </div>
                     HabitFFlow Inc.
-                </a>
+                </Link>
 
                 <SignupForm />
             </div>

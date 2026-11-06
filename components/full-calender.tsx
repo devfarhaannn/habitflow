@@ -515,27 +515,28 @@ const CalendarNextTrigger = forwardRef<
 
 CalendarNextTrigger.displayName = 'CalendarNextTrigger';
 
+
 const CalendarPrevTrigger = forwardRef<
     HTMLButtonElement,
     React.HTMLAttributes<HTMLButtonElement>
 >(({ children, onClick, ...props }, ref) => {
     const { date, setDate, view, enableHotkeys } = useCalendar();
 
-    useHotkeys('ArrowLeft', () => prev(), {
-        enabled: enableHotkeys,
-    });
-
     const prev = useCallback(() => {
-        if (view === 'day') {
+        if (view === "day") {
             setDate(subDays(date, 1));
-        } else if (view === 'week') {
+        } else if (view === "week") {
             setDate(subWeeks(date, 1));
-        } else if (view === 'month') {
+        } else if (view === "month") {
             setDate(subMonths(date, 1));
-        } else if (view === 'year') {
+        } else if (view === "year") {
             setDate(subYears(date, 1));
         }
     }, [date, view, setDate]);
+
+    useHotkeys("ArrowLeft", () => prev(), {
+        enabled: enableHotkeys,
+    });
 
     return (
         <Button
@@ -553,7 +554,9 @@ const CalendarPrevTrigger = forwardRef<
     );
 });
 
-CalendarPrevTrigger.displayName = 'CalendarPrevTrigger';
+CalendarPrevTrigger.displayName = "CalendarPrevTrigger";
+
+
 
 const CalendarTodayTrigger = forwardRef<
     HTMLButtonElement,
@@ -563,17 +566,17 @@ const CalendarTodayTrigger = forwardRef<
         setDate,
         enableHotkeys,
         today,
-        onDateClick
+        onDateClick,
     } = useCalendar();
-
-    useHotkeys('t', () => jumpToToday(), {
-        enabled: enableHotkeys,
-    });
 
     const jumpToToday = useCallback(() => {
         setDate(today);
         onDateClick?.(today);
     }, [today, setDate, onDateClick]);
+
+    useHotkeys("t", () => jumpToToday(), {
+        enabled: enableHotkeys,
+    });
 
     return (
         <Button
@@ -589,7 +592,9 @@ const CalendarTodayTrigger = forwardRef<
         </Button>
     );
 });
-CalendarTodayTrigger.displayName = 'CalendarTodayTrigger';
+
+CalendarTodayTrigger.displayName = "CalendarTodayTrigger";
+
 
 const CalendarCurrentDate = () => {
     const { date, view } = useCalendar();

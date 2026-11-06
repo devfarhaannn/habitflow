@@ -115,7 +115,7 @@ export default async function HabitIdPage({
             <div className="rounded-xl border bg-card p-6 space-y-4">
                 <div className="flex justify-between">
                     <h2 className="font-semibold">
-                        Today's Progress
+                        Today&apos;s Progress
                     </h2>
 
                     <span className="font-medium">

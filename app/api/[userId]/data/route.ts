@@ -6,6 +6,189 @@ import prisma from "@/lib/prisma";
 type Params = {
     params: Promise<{ userId: string }>;
 };
+
+type BackupCategory = {
+    id: string;
+    title: string;
+    userId?: string;
+};
+
+type BackupHabit = {
+    id: string;
+    userId?: string;
+    order: number;
+    title: string;
+    description: string | null;
+    color: string;
+    icon: string;
+    goalType: "DAILY" | "WEEKLY" | "MONTHLY";
+    targetPerDay: number;
+    streakGoal: number | null;
+    categoryId: string;
+    status: "ACTIVE" | "INACTIVE" | "COMPLETED" | "ARCHIVED";
+    archivedAt: string | null;
+    startDate: string;
+    endDate: string | null;
+    reminderEnabled: boolean;
+    currentStreak: number;
+    longestStreak: number;
+    totalCompletions: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+type BackupCompletion = {
+    id: string;
+    userId?: string;
+    habitId: string;
+    date: string;
+    completedAt: string;
+};
+
+type BackupDailyStat = {
+    id: string;
+    userId?: string;
+    habitId: string;
+    date: string;
+    completionCount: number;
+    targetCount: number;
+};
+
+type BackupReminder = {
+    id: string;
+    userId?: string;
+    habitId: string;
+    time: string;
+    daysOfWeek: number[];
+    enabled: boolean;
+    createdAt: string;
+    updatedAt: string;
+};
+
+type BackupData = {
+    categories: BackupCategory[];
+    habits: BackupHabit[];
+    completions: BackupCompletion[];
+    dailyStats: BackupDailyStat[];
+    reminders: BackupReminder[];
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value)
+    );
+}
+
+function hasValidUserId(record: Record<string, unknown>) {
+    return record.userId === undefined ||
+        typeof record.userId === "string";
+}
+
+function isCategoryBackup(value: unknown): value is BackupCategory {
+    return (
+        isRecord(value) &&
+        typeof value.id === "string" &&
+        typeof value.title === "string" &&
+        !!value.title.trim() &&
+        hasValidUserId(value)
+    );
+}
+
+function isHabitBackup(value: unknown): value is BackupHabit {
+    return (
+        isRecord(value) &&
+        typeof value.id === "string" &&
+        typeof value.title === "string" &&
+        !!value.title.trim() &&
+        hasValidUserId(value) &&
+        Number.isInteger(value.order) &&
+        (typeof value.description === "string" || value.description === null) &&
+        typeof value.color === "string" &&
+        typeof value.icon === "string" &&
+        ["DAILY", "WEEKLY", "MONTHLY"].includes(String(value.goalType)) &&
+        Number.isInteger(value.targetPerDay) &&
+        Number(value.targetPerDay) >= 1 &&
+        (value.streakGoal === null || Number.isInteger(value.streakGoal)) &&
+        typeof value.categoryId === "string" &&
+        ["ACTIVE", "INACTIVE", "COMPLETED", "ARCHIVED"].includes(String(value.status)) &&
+        (value.archivedAt === null || isValidDate(value.archivedAt)) &&
+        isValidDate(value.startDate) &&
+        (value.endDate === null || isValidDate(value.endDate)) &&
+        typeof value.reminderEnabled === "boolean" &&
+        Number.isInteger(value.currentStreak) &&
+        Number.isInteger(value.longestStreak) &&
+        Number.isInteger(value.totalCompletions) &&
+        isValidDate(value.createdAt) &&
+        isValidDate(value.updatedAt)
+    );
+}
+
+function isCompletionBackup(value: unknown): value is BackupCompletion {
+    return (
+        isRecord(value) &&
+        typeof value.id === "string" &&
+        typeof value.habitId === "string" &&
+        !!value.habitId &&
+        hasValidUserId(value) &&
+        isValidDate(value.date) &&
+        isValidDate(value.completedAt)
+    );
+}
+
+function isDailyStatBackup(value: unknown): value is BackupDailyStat {
+    return (
+        isRecord(value) &&
+        typeof value.id === "string" &&
+        typeof value.habitId === "string" &&
+        !!value.habitId &&
+        hasValidUserId(value) &&
+        Number.isInteger(value.completionCount) &&
+        Number(value.completionCount) >= 0 &&
+        Number.isInteger(value.targetCount) &&
+        Number(value.targetCount) >= 1 &&
+        isValidDate(value.date)
+    );
+}
+
+function isReminderBackup(value: unknown): value is BackupReminder {
+    return (
+        isRecord(value) &&
+        typeof value.id === "string" &&
+        typeof value.habitId === "string" &&
+        !!value.habitId &&
+        hasValidUserId(value) &&
+        Array.isArray(value.daysOfWeek) &&
+        value.daysOfWeek.every(
+            (day) =>
+                Number.isInteger(day) &&
+                day >= 0 &&
+                day <= 6
+        ) &&
+        new Set(value.daysOfWeek).size === value.daysOfWeek.length &&
+        typeof value.enabled === "boolean" &&
+        isValidDate(value.time) &&
+        isValidDate(value.createdAt) &&
+        isValidDate(value.updatedAt)
+    );
+}
+
+function isBackupData(value: unknown): value is BackupData {
+    return (
+        isRecord(value) &&
+        Array.isArray(value.categories) &&
+        value.categories.every(isCategoryBackup) &&
+        Array.isArray(value.habits) &&
+        value.habits.every(isHabitBackup) &&
+        Array.isArray(value.completions) &&
+        value.completions.every(isCompletionBackup) &&
+        Array.isArray(value.dailyStats) &&
+        value.dailyStats.every(isDailyStatBackup) &&
+        Array.isArray(value.reminders) &&
+        value.reminders.every(isReminderBackup)
+    );
+}
 function isValidDate(value: unknown) {
     return typeof value === "string" && !Number.isNaN(Date.parse(value));
 }
@@ -59,7 +242,7 @@ export async function POST(request: NextRequest, { params }: Params) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        let backup;
+        let backup: unknown;
 
         try {
             backup = await request.json();
@@ -71,14 +254,10 @@ export async function POST(request: NextRequest, { params }: Params) {
         }
 
         if (
-            backup?.app !== "HabitFlow" ||
-            backup?.version !== 1 ||
-            !backup?.data ||
-            !Array.isArray(backup.data.categories) ||
-            !Array.isArray(backup.data.habits) ||
-            !Array.isArray(backup.data.completions) ||
-            !Array.isArray(backup.data.dailyStats) ||
-            !Array.isArray(backup.data.reminders)
+            !isRecord(backup) ||
+            backup.app !== "HabitFlow" ||
+            backup.version !== 1 ||
+            !isBackupData(backup.data)
         ) {
             return NextResponse.json(
                 { error: "Invalid HabitFlow backup file" },
@@ -102,15 +281,12 @@ export async function POST(request: NextRequest, { params }: Params) {
             ...reminders,
         ];
 
-        // Basic record validation
+        // Prevent importing records belonging to another user.
         if (
             allRecords.some(
                 (record) =>
-                    !record ||
-                    typeof record !== "object" ||
-                    Array.isArray(record) ||
-                    typeof record.id !== "string" ||
-                    (record.userId && record.userId !== userId)
+                    record.userId !== undefined &&
+                    record.userId !== userId
             )
         ) {
             return NextResponse.json(
@@ -119,86 +295,12 @@ export async function POST(request: NextRequest, { params }: Params) {
             );
         }
 
-        // Validate required fields
-        if (
-            categories.some(
-                (item: any) =>
-                    typeof item.title !== "string" ||
-                    !item.title.trim()
-            ) ||
-            habits.some(
-                (item: any) =>
-                    typeof item.title !== "string" ||
-                    !item.title.trim() ||
-                    typeof item.categoryId !== "string" ||
-                    !item.categoryId ||
-                    !isValidDate(item.startDate) ||
-                    (item.endDate !== null && item.endDate !== undefined && !isValidDate(item.endDate)) ||
-                    (item.archivedAt !== null && item.archivedAt !== undefined && !isValidDate(item.archivedAt))
-            ) ||
-            completions.some(
-                (item: any) =>
-                    typeof item.habitId !== "string" ||
-                    !item.habitId ||
-                    !isValidDate(item.date) ||
-                    !isValidDate(item.completedAt)
-            ) ||
-            dailyStats.some(
-                (item: any) =>
-                    typeof item.habitId !== "string" ||
-                    !item.habitId ||
-                    !Number.isInteger(item.completionCount) ||
-                    !Number.isInteger(item.targetCount) ||
-                    !isValidDate(item.date) ||
-                    item.completionCount < 0 ||
-                    item.targetCount < 1
-            ) ||
-            reminders.some(
-                (item: any) =>
-                    typeof item.habitId !== "string" ||
-                    !item.habitId ||
-                    !Array.isArray(item.daysOfWeek) ||
-                    item.daysOfWeek.some(
-                        (day: number) =>
-                            !Number.isInteger(day) || day < 0 || day > 6
-                    ) ||
-                    new Set(item.daysOfWeek).size !== item.daysOfWeek.length ||
-                    typeof item.enabled !== "boolean" ||
-                    !item.time ||
-                    !isValidDate(item.time)
-            )
-        ) {
-            return NextResponse.json(
-                { error: "Backup contains invalid field values" },
-                { status: 400 }
-            );
-        }
-
-        // Prevent duplicate IDs inside the backup.
-        for (const collection of [
-            categories,
-            habits,
-            completions,
-            dailyStats,
-            reminders,
-        ]) {
-            const ids = collection.map((item: any) => item.id);
-
-            if (new Set(ids).size !== ids.length) {
-                return NextResponse.json(
-                    { error: "Backup contains duplicate record IDs" },
-                    { status: 400 }
-                );
-            }
-        }
-
         const result = await prisma.$transaction(async (tx) => {
-            const categoryIds = categories.map((item: any) => item.id);
-            const habitIds = habits.map((item: any) => item.id);
-            const completionIds = completions.map((item: any) => item.id);
-            const reminderIds = reminders.map((item: any) => item.id);
-            const statIds = dailyStats.map((item: any) => item.id);
-
+            const categoryIds = categories.map((item) => item.id);
+            const habitIds = habits.map((item) => item.id);
+            const completionIds = completions.map((item) => item.id);
+            const reminderIds = reminders.map((item) => item.id);
+            const statIds = dailyStats.map((item) => item.id);
             // Check existing record ownership.
             const [
                 existingCategories,
@@ -267,7 +369,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
             if (
                 habits.some(
-                    (habit: any) => !validCategoryIds.has(habit.categoryId)
+                    (habit) => !validCategoryIds.has(habit.categoryId)
                 )
             ) {
                 throw new Error("INVALID_CATEGORY_REFERENCE");
@@ -287,13 +389,13 @@ export async function POST(request: NextRequest, { params }: Params) {
             // Validate completion, statistics and reminder references.
             if (
                 completions.some(
-                    (item: any) => !validHabitIds.has(item.habitId)
+                    (item) => !validHabitIds.has(item.habitId)
                 ) ||
                 dailyStats.some(
-                    (item: any) => !validHabitIds.has(item.habitId)
+                    (item) => !validHabitIds.has(item.habitId)
                 ) ||
                 reminders.some(
-                    (item: any) => !validHabitIds.has(item.habitId)
+                    (item) => !validHabitIds.has(item.habitId)
                 )
             ) {
                 throw new Error("INVALID_HABIT_REFERENCE");

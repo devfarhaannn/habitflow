@@ -1,14 +1,33 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { User, Save, Globe, Palette, Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import {
+    User,
+    Save,
+    Globe,
+    Palette,
+    Lock,
+    Eye,
+    EyeOff,
+    ShieldCheck,
+    Trash2,
+    AlertTriangle,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from "@/components/ui/card";
+
 import {
     Avatar,
     AvatarFallback,
@@ -16,7 +35,6 @@ import {
 } from "@/components/ui/avatar";
 
 import { signOut } from "next-auth/react";
-import { Trash2, AlertTriangle } from "lucide-react";
 
 import {
     AlertDialog,
@@ -36,6 +54,14 @@ export default function SettingsPage() {
 
     const [name, setName] = useState(user?.name ?? "");
     const [timezone, setTimezone] = useState(user?.timezone ?? "UTC");
+    const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
+
+    // Synchronize form values when a different user loads.
+    if (user?.id && user.id !== loadedUserId) {
+        setLoadedUserId(user.id);
+        setName(user.name ?? "");
+        setTimezone(user.timezone ?? "UTC");
+    }
 
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
@@ -45,13 +71,6 @@ export default function SettingsPage() {
 
     const [deleting, setDeleting] = useState(false);
     const [deleteConfirmation, setDeleteConfirmation] = useState("");
-
-    useEffect(() => {
-        if (user) {
-            setName(user.name ?? "");
-            setTimezone(user.timezone ?? "UTC");
-        }
-    }, [user]);
 
     const [saving, setSaving] = useState(false);
 
@@ -137,6 +156,7 @@ export default function SettingsPage() {
             setChangingPassword(false);
         }
     }
+
     async function handleDeleteAccount() {
         if (deleteConfirmation !== "DELETE") {
             toast.error("Please type DELETE to confirm.");
@@ -170,7 +190,9 @@ export default function SettingsPage() {
         }
     }
 
-    if (loading) return <div className="p-6">Loading settings...</div>;
+    if (loading) {
+        return <div className="p-6">Loading settings...</div>;
+    }
 
     return (
         <div className="space-y-6 p-4 md:p-6">
@@ -184,7 +206,8 @@ export default function SettingsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <User className="size-5" /> Profile Information
+                        <User className="size-5" />
+                        Profile Information
                     </CardTitle>
                     <CardDescription>Your account details.</CardDescription>
                 </CardHeader>
@@ -208,9 +231,13 @@ export default function SettingsPage() {
                             </p>
                         </div>
                     </div>
+
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Full name</label>
-                        <Input value={name} onChange={(e) => setName(e.target.value)} />
+                        <Input
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                        />
                     </div>
 
                     <div className="space-y-2">
@@ -228,7 +255,8 @@ export default function SettingsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <Globe className="size-5" /> Regional Preferences
+                        <Globe className="size-5" />
+                        Regional Preferences
                     </CardTitle>
                     <CardDescription>Choose your timezone.</CardDescription>
                 </CardHeader>
@@ -248,13 +276,17 @@ export default function SettingsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <Palette className="size-5" /> Appearance
+                        <Palette className="size-5" />
+                        Appearance
                     </CardTitle>
-                    <CardDescription>Change the appearance of HabitFlow.</CardDescription>
+                    <CardDescription>
+                        Change the appearance of HabitFlow.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        Use the theme button in the sidebar to switch between Light, Dark and System modes.
+                        Use the theme button in the sidebar to switch between
+                        Light, Dark and System modes.
                     </p>
                 </CardContent>
             </Card>
@@ -262,7 +294,8 @@ export default function SettingsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <ShieldCheck className="size-5" /> Account Security
+                        <ShieldCheck className="size-5" />
+                        Account Security
                     </CardTitle>
                     <CardDescription>
                         Update your password to keep your account secure.
@@ -271,7 +304,9 @@ export default function SettingsPage() {
 
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Current password</label>
+                        <label className="text-sm font-medium">
+                            Current password
+                        </label>
                         <Input
                             type={showPasswords ? "text" : "password"}
                             value={currentPassword}
@@ -281,7 +316,9 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">New password</label>
+                        <label className="text-sm font-medium">
+                            New password
+                        </label>
                         <Input
                             type={showPasswords ? "text" : "password"}
                             value={newPassword}
@@ -291,7 +328,9 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Confirm new password</label>
+                        <label className="text-sm font-medium">
+                            Confirm new password
+                        </label>
                         <Input
                             type={showPasswords ? "text" : "password"}
                             value={confirmPassword}
@@ -323,6 +362,7 @@ export default function SettingsPage() {
                     </Button>
                 </CardContent>
             </Card>
+
             <Card className="border-destructive/50">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-destructive">
@@ -330,7 +370,8 @@ export default function SettingsPage() {
                         Danger Zone
                     </CardTitle>
                     <CardDescription>
-                        Permanently delete your HabitFlow account and all associated data.
+                        Permanently delete your HabitFlow account and all
+                        associated data.
                     </CardDescription>
                 </CardHeader>
 
@@ -354,9 +395,9 @@ export default function SettingsPage() {
                                 </AlertDialogTitle>
 
                                 <AlertDialogDescription>
-                                    This action cannot be undone. Your account, habits,
-                                    reminders, completion history, and associated data
-                                    will be permanently deleted.
+                                    This action cannot be undone. Your account,
+                                    habits, reminders, completion history, and
+                                    associated data will be permanently deleted.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
 
@@ -389,7 +430,9 @@ export default function SettingsPage() {
                                     }}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                    {deleting ? "Deleting..." : "Permanently Delete"}
+                                    {deleting
+                                        ? "Deleting..."
+                                        : "Permanently Delete"}
                                 </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>

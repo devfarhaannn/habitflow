@@ -79,11 +79,9 @@ import { RefreshCcw, Undo } from "lucide-react"
 import { IconRenderer } from "../icon-picker/icon-picker"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth"
 import { HabitPageSchema } from "@/types/zod"
 import { ActionCell } from "./habit-action-cell"
 import { CompletionButton } from "./completion-button"
-import { startOfDay } from "date-fns"
 /*
 todo
 3. create the check button such that it have checkbox in the number of targetPerDay
@@ -328,7 +326,7 @@ function HabitFocusView({
       <div className="rounded-xl border bg-card p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold">Today's Focus</h2>
+            <h2 className="text-xl font-semibold">Today&apos;s Focus</h2>
             <p className="text-sm text-muted-foreground">
               Stay consistent and complete your daily habits.
             </p>
@@ -507,27 +505,49 @@ export function DataTable1({
       )
     )
   }, [data])
+  const sendCompletionToDB = React.useCallback(
+  async (id: string, newValue: number, oldValue: number, target: number) => {
+    try {
+      const response = await fetch(
+        `/api/${userId}/habit/${id}/completions`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ newValue, oldValue, target }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update habit completion");
+      }
+    } catch (error) {
+      console.error("Completion update failed:", error);
+    }
+  },
+  [userId]
+);
 
 
   const incrementCompletion = React.useCallback(
-    (id: string, target: number) => {
-      const current =
-        completions[id] ??
-        data.find((habit) => habit.id === id)?.todaysCompletion ??
-        0;
+  (id: string, target: number) => {
+    const current =
+      completions[id] ??
+      data.find((habit) => habit.id === id)?.todaysCompletion ??
+      0;
 
-      const newValue =
-        current + 1 > target ? 0 : current + 1;
+    const newValue = current + 1 > target ? 0 : current + 1;
 
-      setCompletions((prev) => ({
-        ...prev,
-        [id]: newValue
-      }));
+    setCompletions((prev) => ({
+      ...prev,
+      [id]: newValue,
+    }));
 
-      sendCompletionToDB(id, newValue, current, target);
-    },
-    [completions, data, sendCompletionToDB]
-  );
+    void sendCompletionToDB(id, newValue, current, target);
+  },
+  [completions, data, sendCompletionToDB]
+);
 
 
   const [rowSelection, setRowSelection] = React.useState({})
@@ -815,23 +835,6 @@ export function DataTable1({
       order: index + 1,
     }))
 
-    setPendingOrderChanges((prev) => {
-      const updated = { ...prev }
-
-      reordered.forEach((item, index) => {
-        const newOrder = index + 1
-
-        const originalItem = originalDataRef.current.find((d) => d.id === item.id)
-
-        if (originalItem?.order !== newOrder) {
-          updated[item.id] = newOrder
-        } else {
-          delete updated[item.id] // if user moved it back
-        }
-      })
-
-      return updated
-    })
 
     setData(reordered)
   }
@@ -877,25 +880,6 @@ export function DataTable1({
   function handleResetChanges() {
     setData(originalDataRef.current)
     setPendingOrderChanges({})
-  }
-
-  function sendCompletionToDB(id: string, newValue: number, oldValue: number, target: number) {
-    const updateHabit = async () => {
-      try {
-        await fetch(`/api/${userId}/habit/${id}/completions`, {
-          method: "PATCH",
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ newValue, oldValue, target })
-        });
-
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    updateHabit();
   }
 
   return (
@@ -1255,7 +1239,7 @@ export function DataTable1({
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Today's progress
+                        Today&apos;s progress
                       </span>
                       <span className="font-medium">
                         {completed}/{target}

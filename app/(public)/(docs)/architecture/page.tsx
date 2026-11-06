@@ -76,7 +76,7 @@ export default function ArchitecturePage() {
         </h1>
 
         <p className="max-w-3xl text-base leading-7 text-muted-foreground">
-          An overview of HabitFlow's application architecture,
+          An overview of HabitFlow&apos;s application architecture,,
           system layers, authentication flow and database
           communication.
         </p>
