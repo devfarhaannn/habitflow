@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input"
 import { useAuth } from "@/hooks/useAuth"
 import { loginFormSchema } from "@/types/zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { redirect } from "next/navigation"
 import { useRouter } from "next/navigation";
 import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"

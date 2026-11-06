@@ -1,7 +1,6 @@
 "use client"
 
 import { Check, Plus } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { useMemo } from "react"
 
 interface CompletionButtonProps {

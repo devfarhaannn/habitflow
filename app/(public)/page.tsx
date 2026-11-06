@@ -1,4 +1,3 @@
-import { Animation } from "@/components/animation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -130,15 +129,19 @@ export default async function HomePage() {
                         </div>
 
                         <div className='shrink-0'>
-                            <img
-                                src='https://cdn.shadcnstudio.com/ss-assets/blocks/marketing/social-proof/image-1.png'
-                                alt='Social Widget'
-                                className='w-142 object-contain dark:hidden'
+                            <Image
+                                src="https://cdn.shadcnstudio.com/ss-assets/blocks/marketing/social-proof/image-1.png"
+                                alt="Social Widget"
+                                width={800}
+                                height={600}
+                                className="w-142 object-contain dark:hidden"
                             />
-                            <img
-                                src='https://cdn.shadcnstudio.com/ss-assets/blocks/marketing/social-proof/image-1-dark.png'
-                                alt='Social Widget'
-                                className='hidden w-142 object-contain dark:inline-block'
+                            <Image
+                                src="https://cdn.shadcnstudio.com/ss-assets/blocks/marketing/social-proof/image-1-dark.png"
+                                alt="Social Widget"
+                                width={800}
+                                height={600}
+                                className="hidden w-142 object-contain dark:inline-block"
                             />
                         </div>
                     </div>
@@ -158,7 +161,7 @@ export default async function HomePage() {
                     </div>
 
                     <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-slide-up animate-delay-200">
-                        {features.map((feature, index) => {
+                        {features.map((feature) => {
                             const Icon = feature.icon
                             return (
                                 <Card key={feature.title} className="relative overflow-hidden hover-lift glass-effect group">

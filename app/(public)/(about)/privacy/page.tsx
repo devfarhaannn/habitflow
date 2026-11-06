@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function PrivacyPage() {
     return (
         <section className="py-8 sm:py-16 lg:py-24">
@@ -41,9 +43,11 @@ export default function PrivacyPage() {
                     </div>
 
                     {/* <!-- Image --> */}
-                    <img
+                    <Image
                         src="https://cdn.shadcnstudio.com/ss-assets/blocks/marketing/about-us/image-8.png"
                         alt="About us"
+                        width={800}
+                        height={600}
                         className="w-full h-full max-h-[600px] object-cover rounded-lg"
                     />
 

@@ -1,17 +1,12 @@
 import {
     subDays,
     differenceInCalendarDays,
-    subMonths
 } from "date-fns"
 import prisma from "../prisma"
 import { AnalyticsBackendDTO } from "@/types/types"
 import { getDateRanges } from "../dates"
 import { formatInTimeZone } from "date-fns-tz"
 
-function normalizeTimezone(tz: string) {
-    if (tz === "Asia/Calcutta") return "Asia/Kolkata"
-    return tz
-}
 
 export async function getAnalyticsData(
     userId: string, timezone: string

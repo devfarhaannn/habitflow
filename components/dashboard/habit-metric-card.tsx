@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardHeader } from '@/components/ui/card'
 import { STATISTICS_CARD_DATA } from '@/public/data/dashboard-data';
 import { HabitMetricBackendDTO } from '@/types/types';
 

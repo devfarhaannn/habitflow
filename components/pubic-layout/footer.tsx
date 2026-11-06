@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Code, Code2, GalleryVerticalEnd } from 'lucide-react';
+import { GalleryVerticalEnd } from 'lucide-react';
 
 export default function Footer() {
   return (

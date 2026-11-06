@@ -10,7 +10,6 @@ import {
     Triangle,
     Terminal,
     Database,
-    KeyRound,
     Settings,
     CheckCircle2,
     Server,
@@ -186,7 +185,7 @@ export default function DeploymentPage() {
                         </div>
 
                         <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
-                            {steps.map((step, index) => {
+                            {steps.map((step) => {
                                 const Icon = step.icon
 
                                 return (

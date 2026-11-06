@@ -107,7 +107,7 @@ export function useAuth() {
             setError(null);
             try {
                 setLoading(true);
-                const res = await signOut(options);
+                await signOut(options);
                 return true;
             } finally {
                 setLoading(false);

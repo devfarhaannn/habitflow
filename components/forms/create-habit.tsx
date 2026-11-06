@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 import { IconCirclePlusFilled } from '@tabler/icons-react'
 import { Form, FormControl } from '../ui/form'
 import z from 'zod'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Field, FieldError, FieldLabel } from '../ui/field'
 import { Input } from '../ui/input'
@@ -29,7 +29,6 @@ import { Calendar } from '../ui/calendar'
 import { IconRenderer } from '../icon-picker/icon-picker'
 import { IconPickerDialog } from '../icon-picker/new-picker'
 import { ColorPickerDialog } from '../color-picker/color-dailog'
-import LoadingPage from '@/app/loading'
 import { useAuth } from '@/hooks/useAuth'
 import { CreateHabitformSchema } from '@/types/zod'
 import { useRouter } from "next/navigation";
@@ -45,7 +44,7 @@ type Props = {
 
 export function CreateHabitDailog({ defaultOpen = false, className }: Props) {
     const [open, setOpen] = useState(defaultOpen);
-    const { user, loading } = useAuth();
+    const { user } = useAuth();
     const [categories, setCategories] = useState<{ id: string; title: string }[]>([]);
     const router = useRouter();
 
@@ -76,12 +75,22 @@ export function CreateHabitDailog({ defaultOpen = false, className }: Props) {
             startDate: new Date()
         }
     })
+    const { setValue } = form;
+    const selectedColor = useWatch({
+        control: form.control,
+        name: "color",
+    });
+
+    const selectedIcon = useWatch({
+        control: form.control,
+        name: "icon",
+    });
 
     useEffect(() => {
         if (categories.length > 0) {
-            form.setValue("categoryId", categories[0].id);
+            setValue("categoryId", categories[0].id);
         }
-    }, [categories]);
+    }, [categories, setValue]);
 
     async function onSubmit(values: z.infer<typeof CreateHabitformSchema>) {
         if (!user?.id) {
@@ -158,9 +167,9 @@ export function CreateHabitDailog({ defaultOpen = false, className }: Props) {
                         {/* Top Section */}
                         <div className="flex gap-6">
                             <div className={`flex items-center gap-2 h-24 w-24 rounded-xl bg-background dark:bg-foreground`}
-                                style={{ backgroundColor: form.watch("color") }}>
+                                style={{ backgroundColor: selectedColor }}>
                                 <IconRenderer
-                                    icon={form.watch("icon")}
+                                    icon={selectedIcon}
                                     className="size-16 w-full text-foreground dark:text-background"
                                 />
                             </div>
@@ -232,7 +241,7 @@ export function CreateHabitDailog({ defaultOpen = false, className }: Props) {
                                     <Field data-invalid={fieldState.invalid}>
                                         <ColorPickerDialog
                                             value={field.value}
-                                            onChange={field.onChange}
+                                            onChangeAction={field.onChange}
                                         />
                                     </Field>
                                 )}
@@ -369,7 +378,7 @@ export function CreateHabitDailog({ defaultOpen = false, className }: Props) {
                         </div>
 
                         <DialogFooter className='gap-4 max-sm:flex-col sm:justify-between'>
-                            <Button size='lg' className='bg-primary/10 text-primary hover:bg-primary/20'>
+                            <Button type='button' size='lg' className='bg-primary/10 text-primary hover:bg-primary/20'>
                                 <MessageSquareTextIcon />
                                 Chat with us
                             </Button>

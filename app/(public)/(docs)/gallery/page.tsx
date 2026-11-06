@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 const sections = [
     {
@@ -84,7 +85,14 @@ export default function GalleryPage() {
                     {sections.map((section, sectionIndex) => (
                         <div key={sectionIndex} className={cn({ 'grid grid-cols-2 gap-6': section.type === 'grid' })}>
                             {section.images.map((image, imageIndex) => (
-                                <img key={imageIndex} src={image.src} alt={image.alt} className='rounded-lg object-cover' />
+                                <Image
+                                    key={imageIndex}
+                                    src={image.src}
+                                    alt={image.alt}
+                                    width={800}
+                                    height={600}
+                                    className="rounded-lg object-cover"
+                                />
                             ))}
                         </div>
                     ))}

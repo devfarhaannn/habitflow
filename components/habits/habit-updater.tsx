@@ -667,7 +667,7 @@ export function HabitUpdaterViewer({
                                             <Field>
                                                 <ColorPickerDialog
                                                     value={field.value}
-                                                    onChange={field.onChange}
+                                                    onChangeAction={field.onChange}
                                                 />
                                             </Field>
                                         )}

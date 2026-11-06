@@ -1,5 +1,6 @@
 
 import { GithubIcon, LinkedinIcon, Mail, TwitterIcon } from "lucide-react";
+import Image from "next/image";
 
 
 export default function ContactPage() {
@@ -111,9 +112,12 @@ export default function ContactPage() {
                             {/* <!-- Profile Card --> */}
                             <div className="group relative overflow-hidden rounded-xl lg:rounded-3xl">
 
-                                <img
+                                <Image
                                     src="/new-avatar.png"
-                                    alt="John Doe"
+                                    alt="Farhan Bhatt"
+                                    width={800}
+                                    height={800}
+                                    priority
                                     className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 />
 

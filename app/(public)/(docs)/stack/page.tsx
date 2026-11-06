@@ -5,9 +5,7 @@ import {
   Fingerprint,
   Layers3,
   Palette,
-  Server,
   ShieldCheck,
-  Workflow,
   Wrench,
   BarChart3,
 } from "lucide-react";

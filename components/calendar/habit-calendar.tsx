@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import { formatInTimeZone } from "date-fns-tz";
-import { format } from "date-fns";
 
 import {
     Calendar,

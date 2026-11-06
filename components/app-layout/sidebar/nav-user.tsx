@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/hooks/useAuth"
 import { CircleUser, CreditCard, EllipsisVertical, LogOut, MessageSquareDot } from "lucide-react"
-import Image from "next/image"
 
 export function NavUser() {
   const { isMobile } = useSidebar();

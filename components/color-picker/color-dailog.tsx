@@ -1,4 +1,7 @@
-import { Button } from "@/components/ui/button"
+
+"use client";
+
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogClose,
@@ -8,26 +11,31 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import React from "react";
 import { ColorPicker } from "./colorPicker";
 
-export function ColorPickerDialog({
-    value, onChange
-}: {
+type ColorPickerDialogProps = {
     value: string;
-    onChange: (color: string) => void;
-}) {
+    onChangeAction: (color: string) => void;
+};
+
+export function ColorPickerDialog({
+    value,
+    onChangeAction,
+}: ColorPickerDialogProps) {
     const [open, setOpen] = React.useState(false);
-    // const [color, setColor] = React.useState("#FFFFFF");
+
     return (
-        <Dialog open={open} onOpenChange={(e) => setOpen(e)}>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                {/* <Button variant="outline">Select Color</Button> */}
                 <Button variant="outline" className="min-w-37.5 gap-3">
                     {value ? (
                         <>
-                            <div className="size-4 rounded" style={{ backgroundColor: value }} />
+                            <div
+                                className="size-4 rounded"
+                                style={{ backgroundColor: value }}
+                            />
                             Select Color
                         </>
                     ) : (
@@ -35,6 +43,7 @@ export function ColorPickerDialog({
                     )}
                 </Button>
             </DialogTrigger>
+
             <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle>Select a color</DialogTitle>
@@ -42,15 +51,14 @@ export function ColorPickerDialog({
                         Choose a color that vibes with your style.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex items-center justify-center">
 
+                <div className="flex items-center justify-center">
                     <ColorPicker
                         value={value}
-                        onChange={(color) => {
-                            onChange(color);
-                        }}
+                        onChangeAction={onChangeAction}
                     />
                 </div>
+
                 <DialogFooter className="sm:justify-end">
                     <DialogClose asChild>
                         <Button type="button">Done</Button>
@@ -58,5 +66,5 @@ export function ColorPickerDialog({
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    )
+    );
 }

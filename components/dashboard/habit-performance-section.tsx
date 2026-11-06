@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { Separator } from '@/components/ui/separator'
 import { progressCardData } from '@/public/data/dashboard-data'
 import { HabitPerformanceBackendDTO } from '@/types/types'
+import Image from 'next/image'
 
 interface HabitPerformanceSectionProps {
   habitPerformanceData: HabitPerformanceBackendDTO
@@ -53,7 +54,7 @@ export function HabitPerformanceSection({ habitPerformanceData }: HabitPerforman
   const normalizedData = normalizeTo30Days(habitPerformanceData.consistencyMetrics.dailyData ?? [])
 
   const completionChartData = habitPerformanceData.monthlyTarget.map(
-    (habit, index) => ({
+    (habit) => ({
       name: habit.title,
       value: habit.completedCount,
       fill: habit.color
@@ -73,10 +74,12 @@ export function HabitPerformanceSection({ habitPerformanceData }: HabitPerforman
             <span className='text-lg font-semibold'>Your Progress Summary</span>
             <div className='flex items-center gap-3'>
               {user?.avatar ?
-                <img
+                <Image
                   src='https://cdn.shadcnstudio.com/ss-assets/logo/logo-square.png'
+                  alt='HabitFlow logo'
+                  width={42}
+                  height={42}
                   className='size-10.5 rounded-lg'
-                  alt='logo'
                 /> :
                 <div className='bg-primary/10 rounded-xl h-10 w-10 flex items-center justify-center'>
                   <User />
@@ -91,10 +94,10 @@ export function HabitPerformanceSection({ habitPerformanceData }: HabitPerforman
             </div>
 
             <div className='grid gap-4 sm:grid-cols-2'>
-              {progressCardData.map((metric, index) => {
+              {progressCardData.map((metric) => {
                 const Icon = metric.icon;
                 return (
-                  <div key={index} className='flex items-center gap-3 rounded-md border px-4 py-2'>
+                  <div key={metric.key} className='flex items-center gap-3 rounded-md border px-4 py-2'>
                     <Avatar className='size-8.5 rounded-sm'>
                       <AvatarFallback className='bg-primary/10 text-primary shrink-0 rounded-sm'>
                         <Icon />

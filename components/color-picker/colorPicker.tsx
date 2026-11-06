@@ -34,7 +34,7 @@ type Color = hsl & hex;
 
 type ColorPickerProps = {
     value: string;
-    onChange: (hex: string) => void;
+    onChangeAction: (hex: string) => void;
 };
 
 const HashtagIcon = (props: React.ComponentPropsWithoutRef<"svg">) => {
@@ -90,13 +90,9 @@ function hexToHsl({ hex }: hex): hsl {
         hex += "0";
     }
 
-    let r = parseInt(hex.slice(0, 2), 16) || 0;
-    let g = parseInt(hex.slice(2, 4), 16) || 0;
-    let b = parseInt(hex.slice(4, 6), 16) || 0;
-
-    r /= 255;
-    g /= 255;
-    b /= 255;
+    const r = (parseInt(hex.slice(0, 2), 16) || 0) / 255;
+    const g = (parseInt(hex.slice(2, 4), 16) || 0) / 255;
+    const b = (parseInt(hex.slice(4, 6), 16) || 0) / 255;
 
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
@@ -106,7 +102,8 @@ function hexToHsl({ hex }: hex): hsl {
     const l = (max + min) / 2;
 
     if (max === min) {
-        h = s = 0;
+        h = 0;
+        s = 0;
     } else {
         const d = max - min;
 
@@ -237,11 +234,6 @@ const DraggableColorCanvas = ({
                 passive: false,
             });
             window.addEventListener("touchend", handleTouchEnd);
-        } else {
-            window.removeEventListener("mousemove", handleMouseMove);
-            window.removeEventListener("mouseup", handleMouseUp);
-            window.removeEventListener("touchmove", handleTouchMove);
-            window.removeEventListener("touchend", handleTouchEnd);
         }
 
         return () => {
@@ -283,17 +275,19 @@ const DraggableColorCanvas = ({
                     top: `${100 - l}%`,
                     cursor: dragging ? "grabbing" : "grab",
                 }}
-            ></div>
+            />
         </div>
     );
 };
 
 function sanitizeHex(val: string) {
-    const sanitized = val.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-    return sanitized;
+    return val.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 }
 
-export function ColorPicker({ value, onChange }: ColorPickerProps) {
+export function ColorPicker({
+    value,
+    onChangeAction,
+}: ColorPickerProps) {
     const sanitizedHex = sanitizeHex(value);
     const hsl = hexToHsl({ hex: sanitizedHex });
 
@@ -305,10 +299,8 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
     const handleHexInputChange = (newVal: string) => {
         const hex = sanitizeHex(newVal);
 
-        if (hex.length === 6) {
-            onChange(`#${hex}`);
-        } else if (hex.length < 6) {
-            onChange(`#${hex}`);
+        if (hex.length <= 6) {
+            onChangeAction(`#${hex}`);
         }
     };
 
@@ -318,49 +310,53 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
                 id="slider-thumb-style"
                 dangerouslySetInnerHTML={{
                     __html: `
-              input[type='range']::-webkit-slider-thumb {
-                -webkit-appearance: none;
-                appearance: none;
-                width: 18px;
-                height: 18px;
-                background: transparent;
-                border: 4px solid #FFFFFF;
-                box-shadow: 0 0 0 1px #e4e4e7;
-                cursor: pointer;
-                border-radius: 50%;
-              }
-              input[type='range']::-moz-range-thumb {
-                width: 18px;
-                height: 18px;
-                cursor: pointer;
-                border-radius: 50%;
-                background: transparent;
-                border: 4px solid #FFFFFF;
-                box-shadow: 0 0 0 1px #e4e4e7;
-              }
-              input[type='range']::-ms-thumb {
-                width: 18px;
-                height: 18px;
-                background: transparent;
-                cursor: pointer;
-                border-radius: 50%;
-                border: 4px solid #FFFFFF;
-                box-shadow: 0 0 0 1px #e4e4e7;
-              }
+                        input[type='range']::-webkit-slider-thumb {
+                            -webkit-appearance: none;
+                            appearance: none;
+                            width: 18px;
+                            height: 18px;
+                            background: transparent;
+                            border: 4px solid #FFFFFF;
+                            box-shadow: 0 0 0 1px #e4e4e7;
+                            cursor: pointer;
+                            border-radius: 50%;
+                        }
 
-              .dark input[type='range']::-webkit-slider-thumb {
-                border: 4px solid rgb(24 24 27);
-                box-shadow: 0 0 0 1px #3f3f46;
-              }
-              .dark input[type='range']::-moz-range-thumb {
-                border: 4px solid rgb(24 24 27);
-                box-shadow: 0 0 0 1px #3f3f46;
-              }
-              .dark input[type='range']::-ms-thumb {
-                border: 4px solid rgb(24 24 27);
-                box-shadow: 0 0 0 1px #3f3f46;
-              }
-              `,
+                        input[type='range']::-moz-range-thumb {
+                            width: 18px;
+                            height: 18px;
+                            cursor: pointer;
+                            border-radius: 50%;
+                            background: transparent;
+                            border: 4px solid #FFFFFF;
+                            box-shadow: 0 0 0 1px #e4e4e7;
+                        }
+
+                        input[type='range']::-ms-thumb {
+                            width: 18px;
+                            height: 18px;
+                            background: transparent;
+                            cursor: pointer;
+                            border-radius: 50%;
+                            border: 4px solid #FFFFFF;
+                            box-shadow: 0 0 0 1px #e4e4e7;
+                        }
+
+                        .dark input[type='range']::-webkit-slider-thumb {
+                            border: 4px solid rgb(24 24 27);
+                            box-shadow: 0 0 0 1px #3f3f46;
+                        }
+
+                        .dark input[type='range']::-moz-range-thumb {
+                            border: 4px solid rgb(24 24 27);
+                            box-shadow: 0 0 0 1px #3f3f46;
+                        }
+
+                        .dark input[type='range']::-ms-thumb {
+                            border: 4px solid rgb(24 24 27);
+                            box-shadow: 0 0 0 1px #3f3f46;
+                        }
+                    `,
                 }}
             />
 
@@ -384,7 +380,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
                             l: newColor.l,
                         });
 
-                        onChange(`#${hexFormatted}`);
+                        onChangeAction(`#${hexFormatted}`);
                     }}
                 />
 
@@ -396,13 +392,13 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
                     className="dark:border-zinc-7000 h-3 w-full cursor-pointer appearance-none rounded-full border border-zinc-200 bg-white text-white placeholder:text-white dark:border-zinc-700"
                     style={{
                         background: `linear-gradient(to right, 
-                    hsl(0, 100%, 50%), 
-                    hsl(60, 100%, 50%), 
-                    hsl(120, 100%, 50%), 
-                    hsl(180, 100%, 50%), 
-                    hsl(240, 100%, 50%), 
-                    hsl(300, 100%, 50%), 
-                    hsl(360, 100%, 50%))`,
+                            hsl(0, 100%, 50%), 
+                            hsl(60, 100%, 50%), 
+                            hsl(120, 100%, 50%), 
+                            hsl(180, 100%, 50%), 
+                            hsl(240, 100%, 50%), 
+                            hsl(300, 100%, 50%), 
+                            hsl(360, 100%, 50%))`,
                     }}
                     onChange={(e) => {
                         const hue = e.target.valueAsNumber;
@@ -414,7 +410,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
                             l: newColor.l,
                         });
 
-                        onChange(`#${hexFormatted}`);
+                        onChangeAction(`#${hexFormatted}`);
                     }}
                 />
 
@@ -456,4 +452,4 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
             </div>
         </>
     );
-};
+}

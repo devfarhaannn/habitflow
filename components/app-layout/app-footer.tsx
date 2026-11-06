@@ -1,7 +1,4 @@
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { FacebookIcon, GithubIcon, InstagramIcon, LinkedinIcon, TwitterIcon } from "lucide-react"
+import { FacebookIcon, GithubIcon, LinkedinIcon, TwitterIcon } from "lucide-react"
 
 export function AppFooter() {
     return (

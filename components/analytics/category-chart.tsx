@@ -3,7 +3,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { habitCategoryChartBackendDTO } from '@/types/types'
-import { TrendingUp } from "lucide-react"
 import { Cell, Pie, PieChart } from "recharts"
 
 type CategoryChartProps = {

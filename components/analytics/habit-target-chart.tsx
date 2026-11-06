@@ -17,7 +17,7 @@ const completionChartConfig = {
 export function TargetChartToday({ monthlyTarget }: TargetPageProps) {
 
     const completionChartData = monthlyTarget.map(
-        (habit, index) => ({
+        (habit) => ({
             name: habit.title,
             value: habit.completedCount,
             fill: habit.color
