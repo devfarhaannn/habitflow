@@ -35,11 +35,23 @@ export const NEXT_AUTH: NextAuthOptions = {
                 if (!isValid) {
                     throw new Error("INVALID_CREDENTIALS");
                 }
+                const timezone =
+                    user.timezone === "Asia/Calcutta"
+                        ? "Asia/Kolkata"
+                        : user.timezone;
+
+                if (timezone !== user.timezone) {
+                    await prisma.user.update({
+                        where: { id: user.id },
+                        data: { timezone },
+                    });
+                }
+
                 return {
                     id: user.id,
                     name: user.name,
                     email: user.email,
-                    timezone: user.timezone,
+                    timezone,
                 };
             }
         }),
@@ -57,7 +69,12 @@ export const NEXT_AUTH: NextAuthOptions = {
 
                 if (timezoneCookie?.value) {
                     try {
-                        const timezone = decodeURIComponent(timezoneCookie.value);
+                        const detectedTimezone = decodeURIComponent(timezoneCookie.value);
+
+                        const timezone =
+                            detectedTimezone === "Asia/Calcutta"
+                                ? "Asia/Kolkata"
+                                : detectedTimezone;
 
                         new Intl.DateTimeFormat("en-US", {
                             timeZone: timezone,

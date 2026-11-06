@@ -10,7 +10,7 @@ export function useAuth() {
     const login = useCallback(
         async (provider: string, email: string, password: string) => {
             const options = {
-                redirect: false,
+                redirect: provider === "credentials" ? false : true,
                 callbackUrl: "/dashboard",
                 email,
                 password,

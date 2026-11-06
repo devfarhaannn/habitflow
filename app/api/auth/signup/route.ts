@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 
 export async function POST(req: Request) {
     const { name, email, password, timezone } = await req.json();
+    const normalizedTimezone =
+        timezone === "Asia/Calcutta" ? "Asia/Kolkata" : timezone;
 
     if (!name || !email || !password || !timezone) {
         return Response.json(
@@ -13,7 +15,7 @@ export async function POST(req: Request) {
 
     try {
         new Intl.DateTimeFormat("en-US", {
-            timeZone: timezone
+            timeZone: normalizedTimezone
         });
     } catch {
         return Response.json(
@@ -41,7 +43,7 @@ export async function POST(req: Request) {
             name: `${basUsername}${randomSuffix}`,
             firstName: firstName,
             lastName: lastName,
-            timezone: timezone,
+            timezone: normalizedTimezone,
             email,
             passwordHash,
             habitCategories: {
