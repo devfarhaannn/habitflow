@@ -34,8 +34,8 @@ const data = {
       icon: ChartBarBig,
     },
     {
-      title: "Calender",
-      url: "/calender",
+      title: "Calendar",
+      url: "/calendar",
       icon: Calendar1,
     },
     {
