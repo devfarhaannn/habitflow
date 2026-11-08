@@ -1,3 +1,4 @@
+
 import { AppSidebar } from "@/components/app-layout/app-sidebar";
 import { AppHeader } from "@/components/app-layout/app-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -5,9 +6,17 @@ import { AuthProvider } from "@/providers/AuthProvider";
 import { AppFooter } from "@/components/app-layout/app-footer";
 import { getServerSession } from "next-auth";
 import { NEXT_AUTH } from "@/lib/authOptions";
+import { redirect } from "next/navigation";
 
-export default async function AppLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function AppLayout({
+    children,
+}: Readonly<{ children: React.ReactNode }>) {
     const session = await getServerSession(NEXT_AUTH);
+
+    // Protect the application layout from unauthenticated users
+    if (!session?.user?.id) {
+        redirect("/login");
+    }
 
     return (
         <AuthProvider>
@@ -20,13 +29,19 @@ export default async function AppLayout({ children }: Readonly<{ children: React
                 }
             >
                 <AppSidebar variant="inset" />
+
                 <SidebarInset>
-                    <AppHeader userId={session?.user.id} timezone={session?.user.timezone} />
+                    <AppHeader
+                        userId={session.user.id}
+                        timezone={session.user.timezone ?? "Asia/Kolkata"}
+                    />
+
                     <div className="flex flex-1 flex-col">
                         <div className="@container/main flex flex-1 flex-col gap-2">
                             {children}
                         </div>
                     </div>
+
                     <AppFooter />
                 </SidebarInset>
             </SidebarProvider>

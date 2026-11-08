@@ -34,7 +34,7 @@ export default async function HabitIdPage({
 
     const habits = await getHabitsData(
         session.user.id,
-        session.user.timezone
+        session.user.timezone ?? "Asia/Kolkata"
     );
 
     const habit = habits.find((item) => item.id === id);

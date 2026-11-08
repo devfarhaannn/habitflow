@@ -8,6 +8,7 @@ import { NEXT_AUTH } from "@/lib/authOptions";
 import { getAnalyticsData } from "@/lib/server/analytics";
 import { getServerSession } from "next-auth";
 
+
 export default async function AnalyticsPage() {
     const session = await getServerSession(NEXT_AUTH);
 
@@ -17,14 +18,13 @@ export default async function AnalyticsPage() {
 
     const data = await getAnalyticsData(
         session.user.id,
-        session.user.timezone
+        session.user.timezone ?? "Asia/Kolkata"
     );
 
     return (
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <HabitOverviewCards data={data.habitOverviewData} />
 
-            {/* Completion Chart */}
             <div className="px-4 lg:px-6">
                 <ChartAreaInteractive
                     chartData={data.habitCompletionChart}
@@ -32,19 +32,16 @@ export default async function AnalyticsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-6 px-4 lg:grid-cols-3 lg:px-6">
-                {/* Consistency Chart */}
                 <div className="grid gap-6 max-xl:col-span-full lg:max-xl:grid-cols-2">
                     <HabitConsistencyChart
                         chartData={data.consistencyChart}
                     />
                 </div>
 
-                {/* Category Chart */}
                 <div className="grid gap-6 max-xl:col-span-full lg:max-xl:grid-cols-2">
                     <CategoryChart chartData={data.categoryChart} />
                 </div>
 
-                {/* Habit Target Chart */}
                 <div className="grid gap-6 max-xl:col-span-full lg:max-xl:grid-cols-2">
                     <TargetChartToday
                         monthlyTarget={data.monthlyTarget}
@@ -54,3 +51,4 @@ export default async function AnalyticsPage() {
         </div>
     );
 }
+
