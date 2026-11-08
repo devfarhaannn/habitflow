@@ -1,177 +1,206 @@
-# HabitFlow
+# HabitFlow – Modern Habit Tracker
 
-HabitFlow is a full-stack habit tracking application designed to help people create routines, track daily progress, and build consistency over time. It includes habit management, completion tracking, streaks, calendar views, reminders, analytics, and account settings.
+**HabitFlow** is a modern, full-stack habit-tracking application designed to help you build better habits, one day at a time. It provides a focused dashboard, habit management, daily tracking, streaks, and analytics so you can monitor your progress and improve your routines.
+
+---
 
 ## Features
 
-- **Authentication** — Sign up and sign in with email/password or Google.
-- **Habit management** — Create, edit, organize, favorite, reorder, and delete habits.
-- **Categories** — Organize habits with categories, icons, and colors.
-- **Progress tracking** — Record habit completions and monitor streaks and daily statistics.
-- **Dashboard and analytics** — Review habit activity and progress through dashboard and report views.
-- **Calendar** — View habit activity by date with timezone-aware date handling.
-- **Reminders** — Configure reminder times and weekdays for habits.
-- **Data management** — Export and restore account data.
-- **Settings** — Manage profile, password, and timezone settings.
-- **Responsive interface** — Built with Next.js, Tailwind CSS, and shadcn/ui components.
+- **Dashboard Overview**
+  - See your habits, current streaks, longest streaks, and total completions.
+  - Timezone-aware statistics so daily progress matches your local day.
 
-## Tech stack
+- **Habit Management**
+  - Create, organize, categorize, favorite, reorder, and delete habits.
+  - Color-coded habits with icons for quick visual identification.
 
-| Area | Technologies |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript |
-| UI | React 19, Tailwind CSS 4, shadcn/ui, Radix UI |
-| Icons and charts | Lucide React, Recharts |
-| Forms and validation | React Hook Form, Zod |
-| Authentication | NextAuth.js, Google OAuth, Credentials provider |
-| Database | PostgreSQL |
-| ORM | Prisma 7 with the PostgreSQL driver adapter (`@prisma/adapter-pg`) |
-| Date and timezone handling | date-fns, date-fns-tz |
-| Interaction | dnd-kit, TanStack Table |
+- **Daily Tracking & Streaks**
+  - Track habit completions day by day.
+  - Monitor current streaks and completion counts.
+  - View habit completion history and daily statistics.
 
-## Requirements
+- **Analytics**
+  - Visualize habit progress and completion trends.
+  - Review historical performance and consistency.
 
-- Node.js 20.9 or newer (Node.js 22 LTS is recommended).
-- pnpm.
-- A PostgreSQL database.
-- Google OAuth credentials if you want to use Google sign-in locally.
+- **Navigation & UX**
+  - Sidebar-based application navigation.
+  - Dashboard, Habits, Analytics, Calendar, Reminders, and Settings.
+  - Responsive interface with dark-mode support.
 
-## Getting started
+- **Authentication & Theming**
+  - Email and password authentication.
+  - Google OAuth sign-in.
+  - Account settings for profile, password, and timezone management.
 
-### 1. Get the source code
+- **Developer-Friendly**
+  - Prisma schema and seed script for local development data.
+  - Type-safe forms and validation using Zod and React Hook Form.
 
-Clone the repository using its Git URL, then enter the project directory:
+---
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript, React 19
+
+- **Styling & UI**
+  - Tailwind CSS v4
+  - shadcn/ui
+  - Radix UI
+  - Lucide React
+  - Tabler Icons
+
+- **State & Forms**
+  - React Hook Form
+  - Zod
+
+- **Data & Backend**
+  - PostgreSQL
+  - Prisma ORM
+  - `@prisma/adapter-pg`
+  - `pg`
+  - date-fns and date-fns-tz
+
+- **Authentication**
+  - NextAuth.js
+  - Prisma Adapter
+  - Google OAuth
+
+- **UX Enhancements**
+  - dnd-kit for drag-and-drop interactions
+  - TanStack React Table
+  - Recharts for charts and visualizations
+  - Sonner for notifications
+  - Framer Motion for animations
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js:** 20.9 or later
+- **npm**
+- **PostgreSQL** database
+
+### Installation
+
+**1. Clone the repository**
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/devfarhaannn/habitflow.git
 cd habitflow
 ```
 
-### 2. Install dependencies
-
-This project uses pnpm:
+**2. Install dependencies**
 
 ```bash
-pnpm install
+npm install
 ```
 
-### 3. Configure environment variables
+**3. Set up the environment variables**
 
-Create a `.env` file in the project root. Use the variable names below and provide your own local values:
+Create a `.env` file in the project root:
 
 ```env
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
-NEXTAUTH_SECRET="replace-with-a-long-random-secret"
+DATABASE_URL="postgresql://username:password@localhost:5432/habitflow"
+
+NEXTAUTH_SECRET="your-nextauth-secret"
 NEXTAUTH_URL="http://localhost:3000"
+
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
 ```
 
-`DATABASE_URL` is required for PostgreSQL. `NEXTAUTH_SECRET` is used by NextAuth.js. Google OAuth credentials are required for Google sign-in. For local Google OAuth, configure this authorized redirect URI in your Google OAuth client:
+Google OAuth credentials are optional if you do not want to use Google sign-in.
 
-```text
-http://localhost:3000/api/auth/callback/google
-```
+**4. Create the database**
 
-Do not commit `.env` or expose credentials in source control.
+Make sure PostgreSQL is running and create an empty database named `habitflow`.
 
-### 4. Set up the database
-
-Make sure PostgreSQL is running and `DATABASE_URL` points to the database you intend to use.
-
-Apply the existing migrations in development:
+**5. Generate Prisma Client**
 
 ```bash
-pnpm exec prisma migrate dev
+npm run generate
 ```
 
-The Prisma client is generated by the project's install/postinstall setup. If you need to generate it manually, run:
+**6. Set up the database schema**
 
 ```bash
-pnpm exec prisma generate
+npx prisma db push
 ```
 
-To populate the database with the project's seed data, run:
+**7. Seed sample data**
+
+HabitFlow includes a Prisma seed script that creates a demo account, sample categories, six habits, and 90 days of habit statistics and completions.
 
 ```bash
-pnpm exec prisma db seed
+npx prisma db seed
 ```
 
-Seeding is optional. Only run it against a database where you are comfortable adding the sample records.
+The seed script uses the following demo account:
 
-### 5. Start the development server
+- **Email:** `demo@habitflow.com`
+- **Password:** `randomPassword`
+
+**Note:** Running the seed script again replaces the existing habits, categories, completions, and daily statistics belonging to the demo account. Use it with a development database.
+
+**8. Run the development server**
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Available scripts
+---
 
-| Command | Description |
-|---|---|
-| `pnpm dev` | Start the Next.js development server. |
-| `pnpm build` | Create a production build. |
-| `pnpm start` | Start the production server after building. |
-| `pnpm lint` | Run ESLint. |
-| `pnpm generate` | Generate the Prisma client. |
+## Scripts
 
-Additional Prisma commands:
+- **`npm run dev`**: Start the Next.js development server.
+- **`npm run build`**: Create a production build.
+- **`npm run start`**: Start the production server.
+- **`npm run lint`**: Run ESLint.
+- **`npm run generate`**: Generate the Prisma Client.
+- **`npx prisma db seed`**: Insert sample data into the database.
 
-```bash
-pnpm exec prisma migrate dev      # Create/apply migrations in development
-pnpm exec prisma migrate deploy   # Apply committed migrations in deployment
-pnpm exec prisma db seed          # Run the seed script
-pnpm exec prisma generate         # Generate Prisma Client
-```
+---
 
-## Project structure
+## Project Structure
 
 ```text
 habitflow/
-├── app/
-│   ├── (app)/              # Authenticated application pages
-│   ├── (public)/           # Public pages and documentation
-│   └── api/                # API routes
-├── components/             # Shared UI and application components
-├── hooks/                  # React hooks
-├── lib/                    # Authentication, Prisma, and utilities
+│
+├── app/                  # Next.js App Router pages and API routes
+│
+├── components/           # Reusable UI and application components
+│
+├── hooks/                # Custom React hooks
+│
+├── lib/                  # Authentication, Prisma, and utilities
+│
 ├── prisma/
-│   ├── migrations/         # Database migrations
-│   ├── schema.prisma       # Prisma data model
-│   └── seed.ts             # Optional sample data seed
-├── public/                 # Static assets
-├── types/                  # TypeScript and validation types
-├── prisma.config.ts        # Prisma CLI configuration
-└── package.json
+│   ├── migrations/       # Database migration history
+│   ├── schema.prisma     # Prisma database schema
+│   └── seed.ts           # Sample data seed script
+│
+├── public/               # Static assets
+│
+├── types/                # TypeScript types
+│
+├── prisma.config.ts      # Prisma configuration
+├── package.json          # Project dependencies and scripts
+├── package-lock.json     # npm dependency lockfile
+└── README.md
 ```
 
-## Deployment notes
+---
 
-- Configure the production `DATABASE_URL`, `NEXTAUTH_SECRET`, and Google OAuth credentials in your hosting provider's environment settings.
-- Set `NEXTAUTH_URL` to the deployed application URL when required by the hosting environment.
-- Add the production Google OAuth callback URL to the Google OAuth client's authorized redirect URIs:
+## Notes
 
-```text
-https://YOUR_DOMAIN/api/auth/callback/google
-```
-
-- Apply committed database migrations during deployment with:
-
-```bash
-pnpm exec prisma migrate deploy
-```
-
-- Build and start the application using the package scripts (`pnpm build` and `pnpm start`).
-
-See the in-app Deployment documentation for the project's deployment walkthrough.
-
-## Documentation
-
-The application includes in-app documentation covering its architecture, database schema, technology stack, and deployment.
-
-## License
-
-No license is specified in this repository yet. Add a `LICENSE` file if you intend to distribute the project under an open-source license.
+- HabitFlow is currently in early development (`version 0.1.0`).
+- PostgreSQL must be running before starting the application.
+- Keep your `.env` file private and never commit credentials.
+- Google OAuth requires valid Google OAuth credentials.
+- Use npm to install dependencies and run project scripts.

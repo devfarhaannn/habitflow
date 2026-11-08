@@ -219,5 +219,10 @@ async function main() {
 }
 
 main()
-    .catch(console.error)
-    .finally(() => prisma.$disconnect())
+    .catch((error) => {
+        console.error("Seeding failed:", error);
+        process.exitCode = 1;
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });
