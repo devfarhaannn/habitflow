@@ -93,31 +93,39 @@ export async function PATCH(
         }
 
         // Update all habit orders in one transaction
-        await prisma.$transaction(async (tx) => {
-            const habits = await tx.habit.findMany({
-                where: {
-                    id: { in: habitIds },
-                    userId,
-                },
-                select: { id: true },
-            });
 
-            if (habits.length !== habitIds.length) {
-                throw new Error("Habit not found or unauthorized");
-            }
-
-            for (const change of changes) {
-                await tx.habit.update({
+        await prisma.$transaction(
+            async (tx) => {
+                const habits = await tx.habit.findMany({
                     where: {
-                        id: change.id,
+                        id: { in: habitIds },
                         userId,
                     },
-                    data: {
-                        order: change.order,
-                    },
+                    select: { id: true },
                 });
+
+                if (habits.length !== habitIds.length) {
+                    throw new Error("Habit not found or unauthorized");
+                }
+
+                for (const change of changes) {
+                    await tx.habit.update({
+                        where: {
+                            id: change.id,
+                            userId,
+                        },
+                        data: {
+                            order: change.order,
+                        },
+                    });
+                }
+            },
+            {
+                maxWait: 10000,
+                timeout: 20000,
             }
-        });
+        );
+
 
         return Response.json({
             success: true,

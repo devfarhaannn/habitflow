@@ -467,7 +467,7 @@ export function DataTable1({
   const [completions, setCompletions] = React.useState<Record<string, number>>({})
   const [pendingCompletions, setPendingCompletions] =
     React.useState<Record<string, boolean>>({})
-    const pendingCompletionIds = React.useRef(new Set<string>());
+  const pendingCompletionIds = React.useRef(new Set<string>());
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -527,6 +527,9 @@ export function DataTable1({
 
       const result = await response.json().catch(() => ({}));
 
+      console.log("Order API status:", response.status);
+      console.log("Order API response:", result);
+
       if (!response.ok) {
         throw new Error(
           result.error || `Request failed (${response.status})`
@@ -538,58 +541,58 @@ export function DataTable1({
     [userId]
   );
 
-const incrementCompletion = React.useCallback(
+  const incrementCompletion = React.useCallback(
     async (id: string, target: number) => {
-        // Prevent multiple requests for the same habit.
-        if (pendingCompletionIds.current.has(id)) return;
+      // Prevent multiple requests for the same habit.
+      if (pendingCompletionIds.current.has(id)) return;
 
-        pendingCompletionIds.current.add(id);
+      pendingCompletionIds.current.add(id);
 
-        const current =
-            completions[id] ??
-            data.find((habit) => habit.id === id)?.todaysCompletion ??
-            0;
+      const current =
+        completions[id] ??
+        data.find((habit) => habit.id === id)?.todaysCompletion ??
+        0;
 
-        const newValue = current + 1 > target ? 0 : current + 1;
+      const newValue = current + 1 > target ? 0 : current + 1;
+
+      setPendingCompletions((prev) => ({
+        ...prev,
+        [id]: true,
+      }));
+
+      // Update the UI immediately.
+      setCompletions((prev) => ({
+        ...prev,
+        [id]: newValue,
+      }));
+
+      try {
+        await sendCompletionToDB(id, newValue);
+      } catch (error) {
+        // Roll back if the API request fails.
+        setCompletions((prev) => ({
+          ...prev,
+          [id]: current,
+        }));
+
+        console.error("Completion update failed:", error);
+
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to update completion"
+        );
+      } finally {
+        pendingCompletionIds.current.delete(id);
 
         setPendingCompletions((prev) => ({
-            ...prev,
-            [id]: true,
+          ...prev,
+          [id]: false,
         }));
-
-        // Update the UI immediately.
-        setCompletions((prev) => ({
-            ...prev,
-            [id]: newValue,
-        }));
-
-        try {
-            await sendCompletionToDB(id, newValue);
-        } catch (error) {
-            // Roll back if the API request fails.
-            setCompletions((prev) => ({
-                ...prev,
-                [id]: current,
-            }));
-
-            console.error("Completion update failed:", error);
-
-            toast.error(
-                error instanceof Error
-                    ? error.message
-                    : "Failed to update completion"
-            );
-        } finally {
-            pendingCompletionIds.current.delete(id);
-
-            setPendingCompletions((prev) => ({
-                ...prev,
-                [id]: false,
-            }));
-        }
+      }
     },
     [completions, data, sendCompletionToDB]
-);
+  );
 
 
   const [rowSelection, setRowSelection] = React.useState({})
@@ -813,6 +816,7 @@ const incrementCompletion = React.useCallback(
   const [pendingOrderChanges, setPendingOrderChanges] = React.useState<
     Record<string, number>
   >({})
+  const [isSavingOrder, setIsSavingOrder] = React.useState(false);
   React.useEffect(() => {
     setData(initialData);
     originalDataRef.current = initialData;
@@ -868,62 +872,106 @@ const incrementCompletion = React.useCallback(
     return Array.from(typeColumn.getFacetedUniqueValues().keys())
   }, [typeColumn])
 
+
   function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
+    const { active, over } = event;
 
-    if (!over || active.id === over.id) return
+    if (!over || active.id === over.id) return;
 
-    const oldIndex = sortedData.findIndex(item => item.id === active.id)
-    const newIndex = sortedData.findIndex(item => item.id === over.id)
+    const oldIndex = sortedData.findIndex(
+      (item) => item.id === active.id
+    );
 
-    const newData = arrayMove(sortedData, oldIndex, newIndex)
+    const newIndex = sortedData.findIndex(
+      (item) => item.id === over.id
+    );
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const newData = arrayMove(sortedData, oldIndex, newIndex);
 
     const reordered = newData.map((item, index) => ({
       ...item,
       order: index + 1,
-    }))
+    }));
 
+    // Track which habits have changed their original position
+    setPendingOrderChanges(() => {
+      const updated: Record<string, number> = {};
 
-    setData(reordered)
+      reordered.forEach((item) => {
+        const originalItem = originalDataRef.current.find(
+          (original) => original.id === item.id
+        );
+
+        if (originalItem && originalItem.order !== item.order) {
+          updated[item.id] = item.order;
+        }
+      });
+
+      return updated;
+    });
+
+    // Update the UI immediately
+    setData(reordered);
   }
 
-  function handleSubmitOrderChanges() {
+
+
+
+  async function handleSubmitOrderChanges() {
+    if (isSavingOrder) return;
+
     const orderChange = Object.entries(pendingOrderChanges).map(
       ([id, order]) => ({
         id,
         order,
       })
-    )
+    );
 
-    const payload = {
-      orderChange: orderChange
-    }
+    if (orderChange.length === 0) return;
 
-    console.log("Sending to backend:", payload);
+    setIsSavingOrder(true);
 
-    // await updateOrderInDatabase(payload)
+    try {
+      const response = await fetch(`/api/${userId}/habits`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderChange }),
+      });
 
-    const updateHabits = async () => {
-      try {
-        await fetch(`/api/${userId}/habits`, {
-          method: "PATCH",
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
-        });
+      const result = await response.json().catch(() => ({}));
 
-      } catch (error) {
-        console.error(error);
+      console.log("Order API status:", response.status);
+      console.log("Order API response:", result);
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || `Request failed (${response.status})`
+        );
       }
-    };
 
-    updateHabits();
+      // Update original data only after successful database save
+      originalDataRef.current = data;
+      setPendingOrderChanges({});
 
-    originalDataRef.current = data
+      toast.success("Habit order saved successfully!");
+    } catch (error) {
+      console.error("Habit reorder failed:", error);
 
-    setPendingOrderChanges({})
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to save habit order"
+      );
+    } finally {
+      setIsSavingOrder(false);
+    }
   }
+
+
 
   function handleResetChanges() {
     setData(originalDataRef.current)
@@ -1071,15 +1119,24 @@ const incrementCompletion = React.useCallback(
             </Button>
           )}
 
+
           <Button
             variant={hasPendingChanges ? "default" : "outline"}
             size="sm"
             onClick={handleSubmitOrderChanges}
-            disabled={!hasPendingChanges}
+            disabled={!hasPendingChanges || isSavingOrder}
           >
-            <IconPlus />
-            <span className="hidden lg:inline">Submit Changes</span>
+            {isSavingOrder ? (
+              <IconLoader className="animate-spin" />
+            ) : (
+              <IconPlus />
+            )}
+
+            <span className="hidden lg:inline">
+              {isSavingOrder ? "Saving..." : "Submit Changes"}
+            </span>
           </Button>
+
         </div>
       </div>
 
@@ -1121,7 +1178,7 @@ const incrementCompletion = React.useCallback(
                     // items={dataIds}
                     items={sortedData.map(item => item.id)}
                     strategy={verticalListSortingStrategy}
-                    disabled={disableDrag}
+                    disabled={disableDrag || isSavingOrder}
                   >
                     {table.getRowModel().rows.map((row) => (
                       <DraggableRow key={row.id} row={row} />
