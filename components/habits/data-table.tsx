@@ -82,6 +82,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HabitPageSchema } from "@/types/zod"
 import { ActionCell } from "./habit-action-cell"
 import { CompletionButton } from "./completion-button"
+import { toast } from "sonner"
 /*
 todo
 3. create the check button such that it have checkbox in the number of targetPerDay
@@ -283,10 +284,12 @@ function HabitHeatMap({
 function HabitFocusView({
   habits,
   completions,
+  pendingCompletions,
   onIncrement,
 }: {
   habits: z.infer<typeof HabitPageSchema>[];
   completions: Record<string, number>;
+  pendingCompletions: Record<string, boolean>;
   onIncrement: (id: string, target: number) => void;
 }) {
   const activeHabits = habits.filter(
@@ -432,6 +435,7 @@ function HabitFocusView({
                   completionCount={completed}
                   targetPerDay={target}
                   color={habit.color}
+                  disabled={!!pendingCompletions[habit.id]}
                   onIncrement={() => onIncrement(habit.id, target)}
                 />
 
@@ -461,6 +465,9 @@ export function DataTable1({
   // Original data ref
   const originalDataRef = React.useRef(initialData)
   const [completions, setCompletions] = React.useState<Record<string, number>>({})
+  const [pendingCompletions, setPendingCompletions] =
+    React.useState<Record<string, boolean>>({})
+    const pendingCompletionIds = React.useRef(new Set<string>());
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -506,8 +513,7 @@ export function DataTable1({
     )
   }, [data])
   const sendCompletionToDB = React.useCallback(
-  async (id: string, newValue: number, oldValue: number, target: number) => {
-    try {
+    async (id: string, newValue: number) => {
       const response = await fetch(
         `/api/${userId}/habit/${id}/completions`,
         {
@@ -515,38 +521,74 @@ export function DataTable1({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ newValue, oldValue, target }),
+          body: JSON.stringify({ newValue }),
         }
       );
 
+      const result = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        throw new Error("Failed to update habit completion");
+        throw new Error(
+          result.error || `Request failed (${response.status})`
+        );
       }
-    } catch (error) {
-      console.error("Completion update failed:", error);
-    }
-  },
-  [userId]
-);
 
+      return result;
+    },
+    [userId]
+  );
 
-  const incrementCompletion = React.useCallback(
-  (id: string, target: number) => {
-    const current =
-      completions[id] ??
-      data.find((habit) => habit.id === id)?.todaysCompletion ??
-      0;
+const incrementCompletion = React.useCallback(
+    async (id: string, target: number) => {
+        // Prevent multiple requests for the same habit.
+        if (pendingCompletionIds.current.has(id)) return;
 
-    const newValue = current + 1 > target ? 0 : current + 1;
+        pendingCompletionIds.current.add(id);
 
-    setCompletions((prev) => ({
-      ...prev,
-      [id]: newValue,
-    }));
+        const current =
+            completions[id] ??
+            data.find((habit) => habit.id === id)?.todaysCompletion ??
+            0;
 
-    void sendCompletionToDB(id, newValue, current, target);
-  },
-  [completions, data, sendCompletionToDB]
+        const newValue = current + 1 > target ? 0 : current + 1;
+
+        setPendingCompletions((prev) => ({
+            ...prev,
+            [id]: true,
+        }));
+
+        // Update the UI immediately.
+        setCompletions((prev) => ({
+            ...prev,
+            [id]: newValue,
+        }));
+
+        try {
+            await sendCompletionToDB(id, newValue);
+        } catch (error) {
+            // Roll back if the API request fails.
+            setCompletions((prev) => ({
+                ...prev,
+                [id]: current,
+            }));
+
+            console.error("Completion update failed:", error);
+
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Failed to update completion"
+            );
+        } finally {
+            pendingCompletionIds.current.delete(id);
+
+            setPendingCompletions((prev) => ({
+                ...prev,
+                [id]: false,
+            }));
+        }
+    },
+    [completions, data, sendCompletionToDB]
 );
 
 
@@ -741,10 +783,16 @@ export function DataTable1({
 
         return (
           <CompletionButton
-            completionCount={completions[row.original.id] ?? 0}
+            completionCount={completions[row.original.id] ?? row.original.todaysCompletion}
             targetPerDay={row.original.targetPerDay}
             color={row.original.color}
-            onIncrement={() => incrementCompletion(row.original.id, row.original.targetPerDay)}
+            disabled={!!pendingCompletions[row.original.id]}
+            onIncrement={() =>
+              incrementCompletion(
+                row.original.id,
+                row.original.targetPerDay
+              )
+            }
           />
         )
       },
@@ -1298,6 +1346,7 @@ export function DataTable1({
                         completionCount={completed}
                         targetPerDay={target}
                         color={habit.color}
+                        disabled={!!pendingCompletions[habit.id]}
                         onIncrement={() =>
                           incrementCompletion(habit.id, target)
                         }
@@ -1324,6 +1373,7 @@ export function DataTable1({
         <HabitFocusView
           habits={filteredHabits}
           completions={completions}
+          pendingCompletions={pendingCompletions}
           onIncrement={incrementCompletion}
         />
       </TabsContent>

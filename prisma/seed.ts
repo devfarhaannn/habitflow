@@ -1,6 +1,6 @@
-import prisma from "@/lib/prisma"
-import { startOfDay, subDays } from "date-fns"
-import { fromZonedTime, toZonedTime } from "date-fns-tz"
+import prisma from "@/lib/prisma";
+import { startOfDay, subDays } from "date-fns";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import bcrypt from "bcrypt";
 
 const habitData = [
@@ -11,7 +11,7 @@ const habitData = [
         category: "health",
         currentStreak: 12,
         longestStreak: 30,
-        totalCompletions: 45
+        totalCompletions: 45,
     },
     {
         title: "Reading",
@@ -20,7 +20,7 @@ const habitData = [
         category: "learning",
         currentStreak: 5,
         longestStreak: 18,
-        totalCompletions: 30
+        totalCompletions: 30,
     },
     {
         title: "Meditation",
@@ -29,7 +29,7 @@ const habitData = [
         category: "health",
         currentStreak: 20,
         longestStreak: 40,
-        totalCompletions: 55
+        totalCompletions: 55,
     },
     {
         title: "Code Practice",
@@ -38,7 +38,7 @@ const habitData = [
         category: "productivity",
         currentStreak: 15,
         longestStreak: 50,
-        totalCompletions: 60
+        totalCompletions: 60,
     },
     {
         title: "Journal",
@@ -47,7 +47,7 @@ const habitData = [
         category: "productivity",
         currentStreak: 3,
         longestStreak: 15,
-        totalCompletions: 20
+        totalCompletions: 20,
     },
     {
         title: "No Sugar",
@@ -56,16 +56,19 @@ const habitData = [
         category: "health",
         currentStreak: 7,
         longestStreak: 22,
-        totalCompletions: 25
-    }
-]
+        totalCompletions: 25,
+    },
+];
 
 async function main() {
+    const totalStart = performance.now();
 
     const passwordHash = await bcrypt.hash("randomPassword", 10);
 
     const user = await prisma.user.upsert({
-        where: { email: "demo@habitflow.com" },
+        where: {
+            email: "demo@habitflow.com",
+        },
         update: {},
         create: {
             email: "demo@habitflow.com",
@@ -74,148 +77,170 @@ async function main() {
             lastName: "User",
             timezone: "Asia/Kolkata",
             passwordHash,
-        }
-    })
+        },
+    });
 
-    console.log("Seeding deterministic dashboard dataset...")
-    console.log("Deleting All Past Records...");
-
-    // ------------------------------------------------
-    // DELETE PAST RECORDS
-    // ------------------------------------------------
-
-    await prisma.habitCompletion.deleteMany({
-        where: { userId: user.id }
-    })
-
-    await prisma.habitDailyStat.deleteMany({
-        where: { userId: user.id }
-    })
-
-    await prisma.habit.deleteMany({
-        where: {
-            userId: user.id
-        }
-    })
-
-    await prisma.habitCategory.deleteMany({
-        where: {
-            userId: user.id
-        }
-    })
+    console.log("Seeding deterministic dashboard dataset...");
 
     function getUserDayStartUTC(date: Date) {
-        const zoned = toZonedTime(date, user.timezone)
-        const startZoned = startOfDay(zoned)
-        return fromZonedTime(startZoned, user.timezone)
+        const zoned = toZonedTime(date, user.timezone);
+        const startZoned = startOfDay(zoned);
+
+        return fromZonedTime(startZoned, user.timezone);
     }
 
-    // ------------------------------------------------
-    // CATEGORIES
-    // ------------------------------------------------
-    const health = await prisma.habitCategory.create({
-        data: { title: "Health", userId: user.id }
-    })
+    const seedStart = performance.now();
 
-    const learning = await prisma.habitCategory.create({
-        data: { title: "Learning", userId: user.id }
-    })
+    await prisma.$transaction(async (tx) => {
+        // 1. Delete existing records.
+        await tx.habitCompletion.deleteMany({
+            where: { userId: user.id },
+        });
 
-    const productivity = await prisma.habitCategory.create({
-        data: { title: "Productivity", userId: user.id }
-    })
+        await tx.habitDailyStat.deleteMany({
+            where: { userId: user.id },
+        });
 
-    // ------------------------------------------------
-    // 6 ACTIVE HABITS
-    // ------------------------------------------------
-    const habits = await Promise.all(
-        habitData.map(habit =>
-            prisma.habit.create({
-                data: {
-                    userId: user.id,
-                    title: habit.title,
-                    icon: habit.icon,
-                    color: habit.color,
-                    categoryId:
-                        habit.category === "health"
-                            ? health.id
-                            : habit.category === "learning"
-                                ? learning.id
-                                : productivity.id,
-                    currentStreak: habit.currentStreak,
-                    longestStreak: habit.longestStreak,
-                    totalCompletions: habit.totalCompletions
-                }
-            })
-        )
-    )
+        await tx.habit.deleteMany({
+            where: { userId: user.id },
+        });
 
-    // ------------------------------------------------
-    // LAST 90 DAYS DAILY STATS (CONTROLLED DATA)
-    // ------------------------------------------------
-    const statsArray = []
-    const completionArray = []
+        await tx.habitCategory.deleteMany({
+            where: { userId: user.id },
+        });
 
-    for (let i = 0; i < 90; i++) {
+        // 2. Create categories in one query.
+        const categories = await tx.habitCategory.createManyAndReturn({
+            data: [
+                { title: "Health", userId: user.id },
+                { title: "Learning", userId: user.id },
+                { title: "Productivity", userId: user.id },
+            ],
+        });
 
-        const dateUTC = getUserDayStartUTC(subDays(new Date(), i))
+        const categoryMap = new Map(
+            categories.map((category) => [
+                category.title.toLowerCase(),
+                category.id,
+            ])
+        );
 
-        for (const habit of habits) {
-
-            let completion = 1
-
-            if (habit.title === "Reading" && i % 3 === 0) completion = 0
-            if (habit.title === "Journal" && i % 4 === 0) completion = 0
-            if (habit.title === "No Sugar" && i % 5 === 0) completion = 0
-
-            statsArray.push({
-                habitId: habit.id,
+        // 3. Create habits in one query.
+        const habits = await tx.habit.createManyAndReturn({
+            data: habitData.map((habit) => ({
                 userId: user.id,
-                date: dateUTC,
-                completionCount: completion,
-                targetCount: 1
-            })
+                title: habit.title,
+                icon: habit.icon,
+                color: habit.color,
+                categoryId: categoryMap.get(habit.category)!,
+                currentStreak: habit.currentStreak,
+                longestStreak: habit.longestStreak,
+                totalCompletions: habit.totalCompletions,
+            })),
+        });
 
-            if (completion === 1) {
-                completionArray.push({
+        // 4. Generate 90 days of dashboard data.
+        const statsArray = [];
+        const completionArray = [];
+
+        const now = new Date();
+
+        for (let i = 0; i < 90; i++) {
+            const dateUTC = getUserDayStartUTC(
+                subDays(now, i)
+            );
+
+            for (const habit of habits) {
+                let completion = 1;
+
+                if (habit.title === "Reading" && i % 3 === 0) {
+                    completion = 0;
+                }
+
+                if (habit.title === "Journal" && i % 4 === 0) {
+                    completion = 0;
+                }
+
+                if (habit.title === "No Sugar" && i % 5 === 0) {
+                    completion = 0;
+                }
+
+                statsArray.push({
                     habitId: habit.id,
                     userId: user.id,
                     date: dateUTC,
-                    completedAt: dateUTC
-                })
+                    completionCount: completion,
+                    targetCount: 1,
+                });
+
+                if (completion === 1) {
+                    completionArray.push({
+                        habitId: habit.id,
+                        userId: user.id,
+                        date: dateUTC,
+                        completedAt: dateUTC,
+                    });
+                }
             }
         }
-    }
 
-    await prisma.habitDailyStat.createMany({
-        data: statsArray
-    })
+        // 5. Bulk insert daily statistics.
+        await tx.habitDailyStat.createMany({
+            data: statsArray,
+        });
 
-    await prisma.habitCompletion.createMany({
-        data: completionArray
-    })
+        // 6. Bulk insert completions.
+        await tx.habitCompletion.createMany({
+            data: completionArray,
+        });
 
-    // ------------------------------------------------
-    // TODAY PARTIAL COMPLETION (For skippedToday)
-    // ------------------------------------------------
-    const todayUTC = getUserDayStartUTC(new Date())
+        // 7. Set today's partial completion.
+        const todayUTC = getUserDayStartUTC(now);
 
-    await prisma.habitDailyStat.updateMany({
-        where: { userId: user.id, date: todayUTC },
-        data: { completionCount: 0 }
-    })
+        await tx.habitDailyStat.updateMany({
+            where: {
+                userId: user.id,
+                date: todayUTC,
+            },
+            data: {
+                completionCount: 0,
+            },
+        });
 
-    await prisma.habitDailyStat.update({
-        where: {
-            habitId_date: {
-                habitId: habits.find(h => h.title === "Workout")!.id,
-                date: todayUTC
-            }
-        },
-        data: { completionCount: 1 }
-    })
+        const workout = habits.find(
+            (habit) => habit.title === "Workout"
+        );
 
-    console.log("Deterministic timezone-safe dataset created.")
+        if (workout) {
+            await tx.habitDailyStat.update({
+                where: {
+                    habitId_date: {
+                        habitId: workout.id,
+                        date: todayUTC,
+                    },
+                },
+                data: {
+                    completionCount: 1,
+                },
+            });
+        }
+    });
+
+    console.log(
+        `Database seeding completed in ${(
+            (performance.now() - seedStart) /
+            1000
+        ).toFixed(2)} seconds`
+    );
+
+    console.log("Deterministic timezone-safe dataset created.");
+
+    console.log(
+        `Total seed time: ${(
+            (performance.now() - totalStart) /
+            1000
+        ).toFixed(2)} seconds`
+    );
 }
 
 main()

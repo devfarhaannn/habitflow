@@ -113,11 +113,12 @@ export async function seedDatabase(USER_ID: string, USER_TIMEZONE: string) {
     // 6 ACTIVE HABITS
     // ------------------------------------------------
     const habits = await Promise.all(
-        habitData.map(habit =>
+        habitData.map((habit,index) =>
             prisma.habit.create({
                 data: {
                     userId: USER_ID,
                     title: habit.title,
+                    order: index,
                     icon: habit.icon,
                     color: habit.color,
                     categoryId:

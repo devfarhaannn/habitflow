@@ -8,6 +8,7 @@ interface CompletionButtonProps {
     targetPerDay: number
     color?: string
     onIncrement: () => void
+    disabled?: boolean
 }
 
 export function CompletionButton({
@@ -15,6 +16,7 @@ export function CompletionButton({
     targetPerDay,
     color = "#10b981",
     onIncrement,
+    disabled = false,
 }: CompletionButtonProps) {
     const isComplete = completionCount >= targetPerDay
 
@@ -23,7 +25,10 @@ export function CompletionButton({
     const normalizedRadius = radius - stroke
     const circumference = normalizedRadius * 2 * Math.PI
 
-    const progress = Math.min(completionCount / targetPerDay, 1)
+    const progress =
+    targetPerDay > 0
+        ? Math.min(completionCount / targetPerDay, 1)
+        : 0;
 
     const strokeDashoffset = useMemo(() => {
         return circumference - progress * circumference
@@ -32,7 +37,9 @@ export function CompletionButton({
     return (
         <button
             onClick={onIncrement}
-            className="relative h-11 w-11 flex items-center justify-center"
+            disabled={disabled}
+            aria-label="Mark habit completion"
+            className="relative h-11 w-11 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
             <svg
                 height={radius * 2}
