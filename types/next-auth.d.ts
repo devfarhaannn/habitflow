@@ -5,25 +5,20 @@ declare module "next-auth" {
     interface Session {
         user: {
             id: string;
-            name?: string | null;
-            email?: string | null;
-            image?: string | null;
-            avatar?: string | null;
             timezone?: string | null;
+            avatar?: string | null;
         } & DefaultSession["user"];
     }
 
     interface User {
         id: string;
+        timezone?: string | null;
     }
 }
 
 declare module "next-auth/jwt" {
     interface JWT {
+        id?: string;
         timezone?: string;
-        name?: string;
-        email?: string;
-        image?: string;
-        avatar?: string;
     }
 }
