@@ -18,15 +18,18 @@ export async function PATCH(req: Request) {
         const name = body.name;
         const timezone = body.timezone;
 
-        if (
-            typeof name !== "string" ||
-            !name.trim() ||
-            name.trim().length > 100
-        ) {
-            return Response.json(
-                { message: "Please provide a valid name (1–100 characters)." },
-                { status: 400 }
-            );
+        // Validate name only when it is provided.
+        if (name !== undefined) {
+            if (
+                typeof name !== "string" ||
+                !name.trim() ||
+                name.trim().length > 100
+            ) {
+                return Response.json(
+                    { message: "Please provide a valid name (1–100 characters)." },
+                    { status: 400 }
+                );
+            }
         }
 
         if (typeof timezone !== "string") {
@@ -47,11 +50,16 @@ export async function PATCH(req: Request) {
             );
         }
 
+        const normalizedTimezone =
+            timezone === "Asia/Calcutta"
+                ? "Asia/Kolkata"
+                : timezone;
+
         const updatedUser = await prisma.user.update({
             where: { id: session.user.id },
             data: {
-                name: name.trim(),
-                timezone,
+                ...(name !== undefined && { name: name.trim() }),
+                timezone: normalizedTimezone,
             },
             select: {
                 id: true,
